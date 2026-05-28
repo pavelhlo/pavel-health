@@ -1,0 +1,97 @@
+{
+  "posledni_aktualizace": "2026-05-28T06:53:00.421024",
+  "pocet_mereni": 7,
+  "mereni": [
+    {
+      "datum": "21.05.2026",
+      "rano": {
+        "sys": 120,
+        "dia": 80,
+        "tep": 57
+      },
+      "vcer": {
+        "sys": 120,
+        "dia": 80,
+        "tep": 57
+      }
+    },
+    {
+      "datum": "22.05.2026",
+      "rano": {
+        "sys": 141,
+        "dia": 77,
+        "tep": 59
+      },
+      "vcer": {
+        "sys": 124,
+        "dia": 70,
+        "tep": 55
+      }
+    },
+    {
+      "datum": "24.05.2026",
+      "rano": {
+        "sys": null,
+        "dia": null,
+        "tep": null
+      },
+      "vcer": {
+        "sys": 124,
+        "dia": 70,
+        "tep": 55
+      }
+    },
+    {
+      "datum": "25.05.2026",
+      "rano": {
+        "sys": 122,
+        "dia": 80,
+        "tep": 59
+      },
+      "vcer": {
+        "sys": 126,
+        "dia": 72,
+        "tep": 57
+      }
+    },
+    {
+      "datum": "26.05.2026",
+      "rano": {
+        "sys": 133,
+        "dia": 80,
+        "tep": 50
+      },
+      "vcer": {
+        "sys": 120,
+        "dia": 76,
+        "tep": 59
+      }
+    },
+    {
+      "datum": "27.05.2026",
+      "rano": {
+        "sys": 124,
+        "dia": 79,
+        "tep": 52
+      },
+      "vcer": {
+        "sys": 113,
+        "dia": 71,
+        "tep": 54
+      }
+    },
+    {
+      "datum": "28.05.2026",
+      "rano": {
+        "sys": 118,
+        "dia": 74,
+        "tep": 56
+      },
+      "vcer": {
+        "sys": null,
+        "dia": null,
+        "tep": null
+      }
+    }
+  ]
+}
