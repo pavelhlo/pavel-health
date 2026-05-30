@@ -328,7 +328,7 @@
         <!-- HLAVIČKA -->
         <header>
             <h1>❤️ Pavel - Zdraví & Evening Ritual</h1>
-            <p>8-týdenní transformace - Den 1 ✨</p>
+            <p>8-týdenní transformace - Den <span id="dayCount">0</span> ✨</p>
         </header>
 
         <!-- TABS -->
@@ -654,43 +654,35 @@
                 return;
             }
 
-            // Vytvoř pole všech dní v měsíci
-            const startDate = new Date(2026, 4, 1); // Květen 2026
-            const endDate = new Date(2026, 4, 31);  // Konec května
-            const allDates = [];
-            const ranoDataFull = [];
-            const vcerDataFull = [];
-            const ranoColorsFull = [];
-            const vcerColorsFull = [];
+            // Vezmi jen skutečná měření (bez null hodnot)
+            const labels = [];
+            const ranoData = [];
+            const vcerData = [];
+            const ranoColors = [];
+            const vcerColors = [];
 
-            // Procházej všechny dny v měsíci
-            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                // Formátuj jako "DD.MM.YYYY"
-                const day = String(d.getDate()).padStart(2, '0');
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const year = d.getFullYear();
-                const dateStr = `${day}.${month}.${year}`;
-                allDates.push(dateStr);
+            // Procházej jen měření která máš
+            bloodPressureData.mereni.forEach(record => {
+                labels.push(record.datum);
 
-                // Najdi měření pro tento den
-                const record = bloodPressureData.mereni.find(m => m.datum === dateStr);
-
-                if (record && record.rano.sys) {
-                    ranoDataFull.push(record.rano.sys);
-                    ranoColorsFull.push(getColorForBP(record.rano.sys));
+                // RÁNO
+                if (record.rano.sys !== null) {
+                    ranoData.push(record.rano.sys);
+                    ranoColors.push(getColorForBP(record.rano.sys));
                 } else {
-                    ranoDataFull.push(null);
-                    ranoColorsFull.push('#999');
+                    ranoData.push(null);
+                    ranoColors.push('#999');
                 }
 
-                if (record && record.vcer.sys) {
-                    vcerDataFull.push(record.vcer.sys);
-                    vcerColorsFull.push(getColorForBP(record.vcer.sys));
+                // VEČER
+                if (record.vcer.sys !== null) {
+                    vcerData.push(record.vcer.sys);
+                    vcerColors.push(getColorForBP(record.vcer.sys));
                 } else {
-                    vcerDataFull.push(null);
-                    vcerColorsFull.push('#999');
+                    vcerData.push(null);
+                    vcerColors.push('#999');
                 }
-            }
+            });
 
             // Zniči starý graf pokud existuje
             if (bpChart) bpChart.destroy();
@@ -699,35 +691,35 @@
             bpChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: allDates,
+                    labels: labels,
                     datasets: [
                         {
                             label: 'RÁNO - Systóla (mmHg)',
-                            data: ranoDataFull,
+                            data: ranoData,
                             borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
                             tension: 0.4,
                             fill: true,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            pointBackgroundColor: ranoColorsFull,
-                            pointBorderColor: ranoColorsFull,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: ranoColors,
+                            pointBorderColor: ranoColors,
                             pointBorderWidth: 2,
-                            spanGaps: false
+                            spanGaps: true
                         },
                         {
                             label: 'VEČER - Systóla (mmHg)',
-                            data: vcerDataFull,
+                            data: vcerData,
                             borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
                             tension: 0.4,
                             fill: true,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            pointBackgroundColor: vcerColorsFull,
-                            pointBorderColor: vcerColorsFull,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: vcerColors,
+                            pointBorderColor: vcerColors,
                             pointBorderWidth: 2,
-                            spanGaps: false
+                            spanGaps: true
                         }
                     ]
                 },
@@ -850,11 +842,13 @@
 
             // Přidej nový den
             completedDays.push(dateInput);
-            completedDays.sort(); // Seřaď vzestupně
+            completedDays.sort().reverse(); // Seřaď sestupně (nejnovější prvně)
             localStorage.setItem('completedDays', JSON.stringify(completedDays));
 
-            // Spočítej streak
-            calculateStreak(completedDays);
+            // Spočítej streak a aktualizuj display
+            const streak = calculateStreakValue(completedDays);
+            document.getElementById('streakCount').textContent = streak;
+            document.getElementById('dayCount').textContent = completedDays.length;
 
             // Vyčisti input
             document.getElementById('successDate').value = '';
@@ -863,6 +857,32 @@
             renderCompletedDays();
 
             displayMessage('✅ Rituál zaznamenán pro ' + formatDate(dateInput) + '! 🎉', 'success');
+        }
+
+        function calculateStreakValue(completedDays) {
+            if (completedDays.length === 0) {
+                return 0;
+            }
+
+            let streak = 0;
+            const today = new Date();
+
+            for (let i = 0; i < completedDays.length; i++) {
+                const dateStr = completedDays[i];
+                const date = new Date(dateStr);
+
+                // Spočítej rozdíl dnů od dneška
+                const daysDiff = Math.floor((today - date) / (1000 * 60 * 60 * 24));
+
+                // Pokud jsou dny v řadě (0, 1, 2, 3...)
+                if (daysDiff === i) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+
+            return streak;
         }
 
         function calculateStreak(completedDays) {
@@ -1063,7 +1083,9 @@
 
             // Evening Ritual - Streak
             const completedDays = JSON.parse(localStorage.getItem('completedDays') || '[]');
-            calculateStreak(completedDays);
+            const streak = calculateStreakValue(completedDays);
+            document.getElementById('streakCount').textContent = streak;
+            document.getElementById('dayCount').textContent = completedDays.length;
             renderCompletedDays();
 
             // Nastav datum na dneska
