@@ -929,12 +929,31 @@
             let html = '';
 
             sorted.forEach(day => {
-                html += `<div style="padding: 8px; background: rgba(255,255,255,0.05); margin: 5px 0; border-radius: 5px; border-left: 3px solid #10b981;">
-                    ✅ ${formatDate(day)}
+                html += `<div style="padding: 8px; background: rgba(255,255,255,0.05); margin: 5px 0; border-radius: 5px; border-left: 3px solid #10b981; display: flex; justify-content: space-between; align-items: center;">
+                    <span>✅ ${formatDate(day)}</span>
+                    <button onclick="removeDay('${day}')" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;">✕ Smazat</button>
                 </div>`;
             });
 
             list.innerHTML = html;
+        }
+
+        function removeDay(dateStr) {
+            if (!confirm('Smazat ' + formatDate(dateStr) + '?')) {
+                return;
+            }
+
+            let completedDays = JSON.parse(localStorage.getItem('completedDays') || '[]');
+            completedDays = completedDays.filter(d => d !== dateStr);
+            localStorage.setItem('completedDays', JSON.stringify(completedDays));
+
+            // Aktualizuj display
+            const streak = calculateStreakValue(completedDays);
+            document.getElementById('streakCount').textContent = streak;
+            document.getElementById('dayCount').textContent = completedDays.length;
+            renderCompletedDays();
+
+            displayMessage('✅ Den smazán!', 'success');
         }
 
         function formatDate(dateStr) {
