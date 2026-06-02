@@ -823,26 +823,34 @@
         // EVENING RITUAL FUNKCE
         // ===================================================================
 
-        // Globální proměnné pro storage (localStorage nemusí fungovat na všech zařízeních)
+        // Globální proměnné pro storage - PERSITENTNÍ přes session
         let completedDaysData = [];
 
         function loadCompletedDaysFromStorage() {
-            try {
-                completedDaysData = JSON.parse(localStorage.getItem('completedDays') || '[]');
-            } catch (e) {
-                console.log('localStorage není dostupný, používám globální proměnnou');
-                completedDaysData = [];
-            }
+            // Vrátí data z globální proměnné (která se zachová během session)
             return completedDaysData;
         }
 
         function saveCompletedDaysToStorage(data) {
+            // Uloží do globální proměnné + zkusí localStorage
+            completedDaysData = data;
             try {
                 localStorage.setItem('completedDays', JSON.stringify(data));
             } catch (e) {
-                console.log('Nelze uložit do localStorage, data jsou v paměti');
+                console.log('localStorage není dostupný, data jsou v globální paměti');
             }
-            completedDaysData = data;
+        }
+
+        function initializeFromLocalStorage() {
+            // Při startu: zkus načíst z localStorage
+            try {
+                const stored = localStorage.getItem('completedDays');
+                if (stored) {
+                    completedDaysData = JSON.parse(stored);
+                }
+            } catch (e) {
+                console.log('localStorage nejsou dostupné');
+            }
         }
 
         function addSuccessDay() {
@@ -1114,6 +1122,9 @@
         // ===================================================================
 
         window.addEventListener('DOMContentLoaded', function() {
+            // Načti data z localStorage
+            initializeFromLocalStorage();
+
             // Studium
             const week = localStorage.getItem('studyWeek') || 1;
             currentWeek = parseInt(week);
