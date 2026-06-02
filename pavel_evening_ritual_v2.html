@@ -451,6 +451,15 @@
                 </div>
 
                 <div class="ritual-section">
+                    <h3>📅 Nastavení Transformace</h3>
+                    <p style="margin: 10px 0; font-size: 0.9em;">Počáteční datum transformace:</p>
+                    <input type="date" id="startDate" style="padding: 10px; border: 2px solid white; border-radius: 5px; margin: 10px 0; font-size: 1em;">
+                    <button class="action-btn btn-primary" onclick="setStartDate()" style="margin-top: 5px;">
+                        ✅ Nastavit Počátek
+                    </button>
+                </div>
+
+                <div class="ritual-section">
                     <h3>📅 Zaznamenat Splnění Rituálu</h3>
                     <p style="margin: 10px 0;">Vyber datum kdy se ti rituál povedl:</p>
                     <input type="date" id="successDate" style="padding: 10px; border: 2px solid white; border-radius: 5px; margin: 10px 0; font-size: 1em;">
@@ -867,6 +876,9 @@
                     console.log('Chyba při zápisu do IndexedDB');
                 }
             }
+
+            // Aktualizuj display
+            updateDayCountDisplay();
         }
 
         function initializeFromStorage() {
@@ -881,8 +893,7 @@
                         if (request.result && request.result.data) {
                             completedDaysData = request.result.data;
                             // Aktualizuj UI
-                            document.getElementById('streakCount').textContent = completedDaysData.length;
-                            document.getElementById('dayCount').textContent = completedDaysData.length;
+                            updateDayCountDisplay();
                             renderCompletedDays();
                         }
                     };
@@ -890,6 +901,40 @@
                     console.log('Chyba při čtení z IndexedDB');
                 }
             }
+        }
+
+        function setStartDate() {
+            const startDate = document.getElementById('startDate').value;
+            if (!startDate) {
+                displayMessage('❌ Prosím vyber datum!', 'error');
+                return;
+            }
+
+            try {
+                localStorage.setItem('transformationStartDate', startDate);
+                displayMessage('✅ Počátek transformace nastaven na ' + formatDate(startDate) + '!', 'success');
+                updateDayCountDisplay();
+            } catch (e) {
+                console.log('Chyba při nastavování data');
+            }
+        }
+
+        function updateDayCountDisplay() {
+            // Spočítej počet dní od počátku transformace
+            const startDateStr = localStorage.getItem('transformationStartDate');
+            let daysSinceStart = 0;
+
+            if (startDateStr) {
+                const startDate = new Date(startDateStr);
+                const today = new Date();
+                const timeDiff = today - startDate;
+                daysSinceStart = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1; // +1 aby počáteční den byl Den 1
+            }
+
+            // Zobrazí v nadpisu
+            document.getElementById('dayCount').textContent = daysSinceStart > 0 ? daysSinceStart : 0;
+            // Zobrazí v počítadle - počet skutečně zaznamenáních dní
+            document.getElementById('streakCount').textContent = completedDaysData.length;
         }
 
         function addSuccessDay() {
@@ -1173,10 +1218,14 @@
 
             // Evening Ritual - Streak
             const completedDays = loadCompletedDaysFromStorage();
-            const streak = calculateStreakValue(completedDays);
-            document.getElementById('streakCount').textContent = streak;
-            document.getElementById('dayCount').textContent = completedDays.length;
+            updateDayCountDisplay();
             renderCompletedDays();
+
+            // Nastav input na počáteční datum pokud existuje
+            const startDate = localStorage.getItem('transformationStartDate');
+            if (startDate) {
+                document.getElementById('startDate').value = startDate;
+            }
 
             // Nastav datum na dneska
             const today = new Date();
