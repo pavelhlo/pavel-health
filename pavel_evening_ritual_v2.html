@@ -425,7 +425,7 @@
 
                 <div class="streak-counter">
                     <div class="number" id="streakCount">0</div>
-                    <div class="label">Dní bez přejídání 🎯</div>
+                    <div class="label" id="streakLabel">Počínaje ...</div>
                 </div>
 
                 <div class="ritual-section">
@@ -941,6 +941,14 @@
 
             const streakElement = document.getElementById('streakCount');
             streakElement.innerHTML = `<strong style="font-size: 1.2em;">${completedCount} dní bez přejídání 🎯 (${percentage}%)</strong><br><span style="font-size: 0.85em; opacity: 0.8; margin-top: 5px;">z celkového počtu ${totalDays} dní</span>`;
+
+            // Aktualizuj label s datem počátku
+            const labelElement = document.getElementById('streakLabel');
+            if (startDateStr) {
+                labelElement.textContent = `Počínaje ${formatDate(startDateStr)}`;
+            } else {
+                labelElement.textContent = 'Počínaje ...';
+            }
         }
 
         function addSuccessDay() {
