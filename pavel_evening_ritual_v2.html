@@ -823,42 +823,72 @@
         // EVENING RITUAL FUNKCE
         // ===================================================================
 
-        // Globální proměnné pro storage - PERSITENTNÍ přes session
+        // Globální proměnné pro storage - INDEXEDDB pro trvalost
         let completedDaysData = [];
+        let db = null;
+
+        function initIndexedDB() {
+            return new Promise((resolve) => {
+                const request = indexedDB.open('PavelHealth', 1);
+
+                request.onerror = () => {
+                    console.log('IndexedDB se neotevřel');
+                    resolve(false);
+                };
+
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(true);
+                };
+
+                request.onupgradeneeded = (event) => {
+                    const database = event.target.result;
+                    if (!database.objectStoreNames.contains('completedDays')) {
+                        database.createObjectStore('completedDays', { keyPath: 'id' });
+                    }
+                };
+            });
+        }
 
         function loadCompletedDaysFromStorage() {
-            // Vrátí data z globální proměnné (která se zachová během session)
             return completedDaysData;
         }
 
         function saveCompletedDaysToStorage(data) {
-            // Uloží do globální proměnné + obě storage
             completedDaysData = data;
-            const jsonData = JSON.stringify(data);
-            try {
-                sessionStorage.setItem('completedDays', jsonData);
-            } catch (e) {
-                console.log('sessionStorage není dostupný');
-            }
-            try {
-                localStorage.setItem('completedDays', jsonData);
-            } catch (e) {
-                console.log('localStorage není dostupný');
+
+            // Uloži do IndexedDB
+            if (db) {
+                try {
+                    const transaction = db.transaction(['completedDays'], 'readwrite');
+                    const store = transaction.objectStore('completedDays');
+                    store.put({ id: 1, data: data });
+                } catch (e) {
+                    console.log('Chyba při zápisu do IndexedDB');
+                }
             }
         }
 
         function initializeFromStorage() {
-            // Při startu: zkus načíst ze sessionStorage nebo localStorage
-            try {
-                let stored = sessionStorage.getItem('completedDays');
-                if (!stored) {
-                    stored = localStorage.getItem('completedDays');
+            // Při startu: načti z IndexedDB
+            if (db) {
+                try {
+                    const transaction = db.transaction(['completedDays'], 'readonly');
+                    const store = transaction.objectStore('completedDays');
+                    const request = store.get(1);
+
+                    request.onsuccess = () => {
+                        if (request.result && request.result.data) {
+                            completedDaysData = request.result.data;
+                            // Aktualizuj UI
+                            document.getElementById('streakCount').textContent = completedDaysData.length;
+                            document.getElementById('dayCount').textContent = completedDaysData.length;
+                            renderCompletedDays();
+                        }
+                    };
+                } catch (e) {
+                    console.log('Chyba při čtení z IndexedDB');
                 }
-                if (stored) {
-                    completedDaysData = JSON.parse(stored);
-                }
-            } catch (e) {
-                console.log('Storage nejsou dostupné');
             }
         }
 
@@ -1130,8 +1160,9 @@
         // INICIALIZACE PŘI NAČTENÍ STRÁNKY
         // ===================================================================
 
-        window.addEventListener('DOMContentLoaded', function() {
-            // Načti data z storage
+        window.addEventListener('DOMContentLoaded', async function() {
+            // Inicializuj IndexedDB a načti data
+            await initIndexedDB();
             initializeFromStorage();
 
             // Studium
