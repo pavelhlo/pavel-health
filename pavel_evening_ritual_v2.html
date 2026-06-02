@@ -933,8 +933,14 @@
 
             // Zobrazí v nadpisu
             document.getElementById('dayCount').textContent = daysSinceStart > 0 ? daysSinceStart : 0;
-            // Zobrazí v počítadle - počet skutečně zaznamenáních dní
-            document.getElementById('streakCount').textContent = completedDaysData.length;
+
+            // Zobrazí v počítadle - počet skutečně zaznamenáních dní + procento
+            const completedCount = completedDaysData.length;
+            const totalDays = daysSinceStart > 0 ? daysSinceStart : 1; // Aby se nedělo nulou
+            const percentage = Math.round((completedCount / totalDays) * 100);
+
+            const streakElement = document.getElementById('streakCount');
+            streakElement.innerHTML = `${completedCount}<br><span style="font-size: 0.6em; opacity: 0.8;">/ ${totalDays} (${percentage}%)</span>`;
         }
 
         function addSuccessDay() {
