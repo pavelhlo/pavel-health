@@ -832,24 +832,33 @@
         }
 
         function saveCompletedDaysToStorage(data) {
-            // Uloží do globální proměnné + zkusí localStorage
+            // Uloží do globální proměnné + obě storage
             completedDaysData = data;
+            const jsonData = JSON.stringify(data);
             try {
-                localStorage.setItem('completedDays', JSON.stringify(data));
+                sessionStorage.setItem('completedDays', jsonData);
             } catch (e) {
-                console.log('localStorage není dostupný, data jsou v globální paměti');
+                console.log('sessionStorage není dostupný');
+            }
+            try {
+                localStorage.setItem('completedDays', jsonData);
+            } catch (e) {
+                console.log('localStorage není dostupný');
             }
         }
 
-        function initializeFromLocalStorage() {
-            // Při startu: zkus načíst z localStorage
+        function initializeFromStorage() {
+            // Při startu: zkus načíst ze sessionStorage nebo localStorage
             try {
-                const stored = localStorage.getItem('completedDays');
+                let stored = sessionStorage.getItem('completedDays');
+                if (!stored) {
+                    stored = localStorage.getItem('completedDays');
+                }
                 if (stored) {
                     completedDaysData = JSON.parse(stored);
                 }
             } catch (e) {
-                console.log('localStorage nejsou dostupné');
+                console.log('Storage nejsou dostupné');
             }
         }
 
@@ -1122,8 +1131,8 @@
         // ===================================================================
 
         window.addEventListener('DOMContentLoaded', function() {
-            // Načti data z localStorage
-            initializeFromLocalStorage();
+            // Načti data z storage
+            initializeFromStorage();
 
             // Studium
             const week = localStorage.getItem('studyWeek') || 1;
