@@ -969,6 +969,1108 @@
             saveCompletedDaysToStorage(completedDays);
 
             // Aktualizuj display
+            document.getElementById('streakCount').textContent = completedDays.length;
+            document.getElementById('dayCount').textContent = completedDays.length;
+            renderCompletedDays();
+
+            displayMessage('✅ Den smazán!', 'success');
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('cs-CZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function recordBP() {
+            const bp = prompt('Zadej tlak (např. 120/80):');
+            if (bp) {
+                const bpRecords = JSON.parse(localStorage.getItem('bpRecords') || '[]');
+                bpRecords.push({
+                    datum: new Date().toLocaleDateString('cs-CZ'),
+                    tlak: bp
+                });
+                localStorage.setItem('bpRecords', JSON.stringify(bpRecords));
+                displayMessage('📊 Tlak zaznamenán: ' + bp, 'success');
+            }
+        }
+
+        function completeWeek() {
+            let week = parseInt(localStorage.getItem('currentWeek') || 1);
+            week++;
+            localStorage.setItem('currentWeek', week);
+            document.getElementById('studyWeek').textContent = week;
+            displayMessage('🏁 Týden ' + (week-1) + ' hotov! Pokračuj na Týden ' + week + '! 🚀', 'success');
+        }
+
+        function resetStreak() {
+            if (confirm('Opravdu chceš resetovat streak?')) {
+                localStorage.setItem('streak', 0);
+                document.getElementById('streakCount').textContent = 0;
+                displayMessage('🔄 Streak resetován. Začínej znovu! 💪', 'success');
+            }
+        }
+
+        // ===================================================================
+        // POMOCNÉ FUNKCE
+        // ===================================================================
+
+        function switchTab(tabName) {
+            // Skryj všechny taby
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Zobraz vybraný tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function displayMessage(text, type) {
+            const msg = document.getElementById('bp-message');
+            msg.textContent = text;
+            msg.className = 'message ' + type;
+            setTimeout(() => {
+                msg.className = 'message';
+            }, 5000);
+        }
+
+        // ===================================================================
+        // FUNKCE NA SPRÁVU STUDIJNÍHO PLÁNU
+        // ===================================================================
+
+        function renderStudyWeek() {
+            const week = studyPlan[currentWeek];
+            if (!week) return;
+
+            let html = `
+                <div class="ritual-section">
+                    <h3>📚 ${week.title}</h3>
+                    <div style="margin-top: 15px;">
+            `;
+
+            // Témata
+            html += '<strong>Témata:</strong><ul>';
+            week.topics.forEach(topic => {
+                html += `<li style="margin: 8px 0;">${topic}</li>`;
+            });
+            html += '</ul>';
+
+            // Domácí úkol
+            html += `<br><strong>🏠 Domácí úkol:</strong><br>${week.homework}`;
+
+            html += `</div></div>`;
+
+            // Progress bar
+            const progress = (currentWeek / 8) * 100;
+            html += `
+                <div class="ritual-section" style="background: rgba(255,255,255,0.05);">
+                    <strong>Pokrok:</strong>
+                    <div style="margin-top: 10px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                        <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, #10b981, #06b6d4); transition: width 0.3s ease;"></div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.9em;">${currentWeek} z 8 týdnů</div>
+                </div>
+            `;
+
+            document.getElementById('studyContent').innerHTML = html;
+            document.getElementById('studyWeekDisplay').textContent = currentWeek;
+        }
+
+        function nextWeek() {
+            if (currentWeek < 8) {
+                currentWeek++;
+                renderStudyWeek();
+                localStorage.setItem('studyWeek', currentWeek);
+                displayMessage('📚 Jdeš na Týden ' + currentWeek + '! 🚀', 'success');
+            } else {
+                displayMessage('🎉 Gratuluji! Absolvoval jsi všech 8 týdnů! 🏆', 'success');
+            }
+        }
+
+        function previousWeek() {
+            if (currentWeek > 1) {
+                currentWeek--;
+                renderStudyWeek();
+                localStorage.setItem('studyWeek', currentWeek);
+            }
+        }
+
+        function markWeekComplete() {
+            const completedWeeks = JSON.parse(localStorage.getItem('completedWeeks') || '[]');
+            if (!completedWeeks.includes(currentWeek)) {
+                completedWeeks.push(currentWeek);
+                localStorage.setItem('completedWeeks', JSON.stringify(completedWeeks));
+                displayMessage('✅ Týden ' + currentWeek + ' je hotov! Pokračuj dál! 💪', 'success');
+            } else {
+                displayMessage('✅ Tento týden je už označený jako hotov.', 'success');
+            }
+        }
+
+        // ===================================================================
+        // INICIALIZACE PŘI NAČTENÍ STRÁNKY
+        // ===================================================================
+
+        window.addEventListener('DOMContentLoaded', function() {
+            // Studium
+            const week = localStorage.getItem('studyWeek') || 1;
+            currentWeek = parseInt(week);
+            document.getElementById('studyWeek').textContent = currentWeek;
+            renderStudyWeek();
+
+            // Evening Ritual - Streak
+            const completedDays = loadCompletedDaysFromStorage();
+            const streak = calculateStreakValue(completedDays);
+            document.getElementById('streakCount').textContent = streak;
+            document.getElementById('dayCount').textContent = completedDays.length;
+            renderCompletedDays();
+
+            // Nastav datum na dneska
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            document.getElementById('successDate').value = todayStr;
+            document.getElementById('successDate').min = '2026-04-01'; // Start tvého plánu
+        });
+    </script>
+</body>
+</html>
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            background: var(--light);
+            color: var(--dark);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* TABULKA */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        thead {
+            background: var(--light);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        tr:hover {
+            background: var(--light);
+        }
+
+        .status-normal {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .status-high {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .status-danger {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .empty-value {
+            color: #999;
+            font-style: italic;
+        }
+
+        /* GRAF */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 30px;
+        }
+
+        /* EVENING RITUAL */
+        .ritual-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .ritual-time {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .ritual-section {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid white;
+        }
+
+        .ritual-section h3 {
+            margin-bottom: 10px;
+        }
+
+        .ritual-item {
+            margin: 8px 0;
+            font-size: 1.1em;
+        }
+
+        .streak-counter {
+            background: white;
+            color: var(--primary);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .streak-counter .number {
+            font-size: 3em;
+            font-weight: 700;
+        }
+
+        .streak-counter .label {
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button.action-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .load-json-section {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px dashed var(--primary);
+        }
+
+        .load-json-section h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .load-json-section input[type="file"] {
+            margin-bottom: 10px;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .message.success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid var(--success);
+            display: block;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HLAVIČKA -->
+        <header>
+            <h1>❤️ Pavel - Zdraví & Evening Ritual</h1>
+            <p>8-týdenní transformace - Den <span id="dayCount">0</span> ✨</p>
+        </header>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('blood-pressure')">📊 Krevní Tlak</button>
+            <button class="tab-button" onclick="switchTab('study')">🧠 Claude Studium</button>
+            <button class="tab-button" onclick="switchTab('ritual')">⭐ Evening Ritual</button>
+        </div>
+
+        <!-- TAB: KREVNÍ TLAK -->
+        <div id="blood-pressure" class="tab-content active">
+            <!-- LOAD JSON -->
+            <div class="load-json-section">
+                <h3>📁 Načti Měření z JSON</h3>
+                <p>Vyber soubor <code>tlak_data.json</code> ze své složky:</p>
+                <input type="file" id="jsonFile" accept=".json" onchange="loadJSON(event)">
+                <button class="btn-primary" onclick="document.getElementById('jsonFile').click()">
+                    Vyber JSON soubor
+                </button>
+            </div>
+
+            <div id="bp-message" class="message"></div>
+
+            <!-- GRAF -->
+            <div style="margin-bottom: 30px;">
+                <h2 style="margin-bottom: 15px;">📈 Trend Systólického Tlaku</h2>
+                <div class="chart-container">
+                    <canvas id="bpChart"></canvas>
+                </div>
+            </div>
+
+            <!-- STATISTIKY -->
+            <div class="stats-grid" id="statsGrid"></div>
+
+            <!-- TABULKA -->
+            <h2 style="margin-bottom: 15px; margin-top: 30px;">📋 Detailní Měření</h2>
+            <div class="table-container">
+                <table id="bpTable">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th colspan="3">RÁNO</th>
+                            <th colspan="3">VEČER</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th>Sys (mmHg)</th>
+                            <th>Dia (mmHg)</th>
+                            <th>Tep (bpm)</th>
+                            <th>Sys (mmHg)</th>
+                            <th>Dia (mmHg)</th>
+                            <th>Tep (bpm)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bpTableBody">
+                        <!-- Data se vloží JavaScriptem -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: CLAUDE STUDIUM -->
+        <div id="study" class="tab-content">
+            <div class="ritual-container">
+                <div class="ritual-time">🧠 8-Týdenní Kurz Claude AI</div>
+
+                <div class="streak-counter">
+                    <div class="number" id="studyWeekDisplay">1</div>
+                    <div class="label">Aktuální Týden / 8</div>
+                </div>
+
+                <div id="studyContent">
+                    <!-- Obsah se vloží JavaScriptem -->
+                </div>
+
+                <div class="buttons" style="margin-top: 20px;">
+                    <button class="action-btn btn-primary" onclick="previousWeek()">
+                        ⬅️ Předchozí Týden
+                    </button>
+                    <button class="action-btn btn-success" onclick="nextWeek()">
+                        Další Týden ➡️
+                    </button>
+                    <button class="action-btn btn-primary" onclick="markWeekComplete()">
+                        ✅ Markovat Týden Jako Hotov
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: EVENING RITUAL -->
+        <div id="ritual" class="tab-content">
+            <div class="ritual-container">
+                <div class="ritual-time">🌙 19:00 - 21:00</div>
+
+                <div class="streak-counter">
+                    <div class="number" id="streakCount">0</div>
+                    <div class="label">Dní bez přejídání 🎯</div>
+                </div>
+
+                <div class="ritual-section">
+                    <h3>19:00-19:20: Tvůj Rituál</h3>
+                    <div class="ritual-item">✅ Řecký jogurt nízkotukoý (150g) - chladný, příjemný</div>
+                    <div class="ritual-item">✅ Zdravý chlebek s medem (1 kousek + 1 lžička)</div>
+                    <div class="ritual-item">✅ Medvídky (10-15 kusů) - psychologická odměna</div>
+                    <div class="ritual-item">✅ Herbal čaj (bez cukru) - kamomila, máta, ginger</div>
+                </div>
+
+                <div class="ritual-section">
+                    <h3>19:20-21:00: Claude Studium</h3>
+                    <div class="ritual-item">📚 Týden <span id="studyWeek">1</span>/8</div>
+                    <div class="ritual-item">🎯 Téma: Základy LLM & Claude</div>
+                    <div class="ritual-item">⏱️ Doba: 90 minut</div>
+                </div>
+
+                <div class="ritual-section">
+                    <h3>21:00-21:30: Příprava na Spánek</h3>
+                    <div class="ritual-item">🚶 Lehká procházka nebo meditace</div>
+                    <div class="ritual-item">💤 Měření tlaku (večer)</div>
+                    <div class="ritual-item">😴 Klid před spánkem</div>
+                </div>
+
+                <div class="ritual-section">
+                    <h3>📅 Zaznamenat Splnění Rituálu</h3>
+                    <p style="margin: 10px 0;">Vyber datum kdy se ti rituál povedl:</p>
+                    <input type="date" id="successDate" style="padding: 10px; border: 2px solid white; border-radius: 5px; margin: 10px 0; font-size: 1em;">
+                    <div style="margin-top: 10px; font-size: 0.9em; opacity: 0.9;">
+                        💡 Tip: Pokud zapomeneš kliknout, můžeš se vrátit a zaznamenat včerejší den
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button class="action-btn btn-success" onclick="addSuccessDay()">
+                        ✅ Zaznamenat Rituál
+                    </button>
+                    <button class="action-btn btn-primary" onclick="recordBP()">
+                        📊 Zaznamenat Tlak
+                    </button>
+                    <button class="action-btn btn-primary" onclick="completeWeek()">
+                        🏁 Dokončit Týden
+                    </button>
+                    <button class="action-btn btn-danger" onclick="resetStreak()">
+                        🔄 Reset Streak
+                    </button>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                    <h4>📋 Splnění Dny:</h4>
+                    <div id="completedDaysList" style="margin-top: 10px; max-height: 200px; overflow-y: auto;">
+                        <!-- Seznám dní se vloží JavaScriptem -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===================================================================
+        // PROMĚNNÉ & KONFIGURACE
+        // ===================================================================
+
+        let bloodPressureData = null;
+        let bpChart = null;
+        let currentWeek = 1;
+
+        // STUDIJNÍ PLÁN - 8 TÝDNŮ
+        const studyPlan = {
+            1: {
+                title: "Základy LLM a Claude Intro",
+                topics: [
+                    "Co je to LLM (Large Language Model)?",
+                    "Tokenizace - jak Claude čte text",
+                    "Transformers - architektura Claudea",
+                    "Prompts & Responses - komunikace s LLM",
+                    "Historie Claudea - od Anthropic (2023-2026)"
+                ],
+                homework: "Ptej se Claude na 10 otázek ohledně tvého nového domu v Praze"
+            },
+            2: {
+                title: "Pokračování Základů LLM",
+                topics: [
+                    "Verze Claudea - Haiku, Sonnet, Opus",
+                    "Capabilities - jaké úkoly zvládá nejlépe",
+                    "Limitations - kde má hranice",
+                    "Praktické cvičení - tvůj první prompt"
+                ],
+                homework: "Vyzkoušej různé otázky a sleduj rozdíly v odpovědích"
+            },
+            3: {
+                title: "Prompt Engineering - KLÍČOVÉ! (Část 1)",
+                topics: [
+                    "Princip Prompt Engineering - jak se ptáš = kvalita odpovědi",
+                    "Kontext - řekni Claudovi kdo jsi",
+                    "Cíl - co chceš doopravdy",
+                    "Format - jak chceš odpověď",
+                    "Tón - jaký styl preferuješ"
+                ],
+                homework: "Napiš 5 různých promptů na stejné téma"
+            },
+            4: {
+                title: "Prompt Engineering - KLÍČOVÉ! (Část 2)",
+                topics: [
+                    "Technika step-by-step - žádej rozbor krok za krokem",
+                    "Role-playing - řekni Claudovi jeho roli",
+                    "Kombinace promptů - ptej se a navazuj",
+                    "Iterace - vylepšování odpovědí"
+                ],
+                homework: "Vytvoř 3 perfektní prompty na tvůj nový dům v Praze"
+            },
+            5: {
+                title: "Praktické Projekty - Zdravotní Asistent",
+                topics: [
+                    "Projekt 1: Zdravotní Asistent pro sebe",
+                    "7-denní straveovací plán",
+                    "5 zdravotních tipů specificky pro tebe",
+                    "Fitness plán (golf + procházky)",
+                    "Iterace a vylepšování"
+                ],
+                homework: "Vytvořte si vlastní zdravotní plán s Claudem"
+            },
+            6: {
+                title: "Praktické Projekty - Smart Home Design",
+                topics: [
+                    "Projekt 2: Apple Ekosystém pro tvůj dům",
+                    "Mac Studio na serveru",
+                    "Mac Mini pro jednotlivé místnosti",
+                    "HomeKit automatizace",
+                    "10 praktických home automation scénářů"
+                ],
+                homework: "Navrh architektura pro svůj nový dům v Praze"
+            },
+            7: {
+                title: "Velký Projekt - Smart Family Hub (Část 1)",
+                topics: [
+                    "Definice projektu + Claude brainstorm",
+                    "Wireframing - co bude systém dělat",
+                    "Technologická volba - Apple eco, servery, software",
+                    "Plánování implementace",
+                    "První prototyp"
+                ],
+                homework: "Brainstorm s Claudem o tvém ideálním systému"
+            },
+            8: {
+                title: "Velký Projekt - Smart Family Hub (Část 2 - Finalizace)",
+                topics: [
+                    "Testing - co funguje, co ne",
+                    "Iterace - vylepšování",
+                    "Finalizace & Prezentace",
+                    "Přehled co ses naučil",
+                    "Další kroky v Claude AI"
+                ],
+                homework: "Finalizuj svůj projekt a prezentuj ho"
+            }
+        };
+
+        // ===================================================================
+        // FUNKCE NA ČTENÍ JSON
+        // ===================================================================
+
+        function loadJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    bloodPressureData = JSON.parse(e.target.result);
+                    displayMessage('✅ JSON soubor načten úspěšně!', 'success');
+                    renderBloodPressureData();
+                } catch (error) {
+                    displayMessage('❌ Chyba při čtení JSON: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ===================================================================
+        // FUNKCE NA ZOBRAZENÍ DAT
+        // ===================================================================
+
+        function renderBloodPressureData() {
+            if (!bloodPressureData || !bloodPressureData.mereni) {
+                displayMessage('❌ Žádná měření v JSON souboru!', 'error');
+                return;
+            }
+
+            // Tabulka
+            const tbody = document.getElementById('bpTableBody');
+            tbody.innerHTML = '';
+
+            bloodPressureData.mereni.forEach(record => {
+                const row = document.createElement('tr');
+                const ranosys = record.rano.sys || '-';
+                const ranodia = record.rano.dia || '-';
+                const ranotep = record.rano.tep || '-';
+                const vcersys = record.vcer.sys || '-';
+                const vcerdia = record.vcer.dia || '-';
+                const vcertep = record.vcer.tep || '-';
+
+                row.innerHTML = `
+                    <td><strong>${record.datum}</strong></td>
+                    <td>${ranosys}</td>
+                    <td>${ranodia}</td>
+                    <td>${ranotep}</td>
+                    <td>${vcersys}</td>
+                    <td>${vcerdia}</td>
+                    <td>${vcertep}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Graf
+            renderChart();
+
+            // Statistiky
+            renderStats();
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('bpChart').getContext('2d');
+
+            if (!bloodPressureData || !bloodPressureData.mereni) {
+                displayMessage('❌ Nejdřív načti JSON soubor!', 'error');
+                return;
+            }
+
+            // Vezmi jen skutečná měření (bez null hodnot)
+            const labels = [];
+            const ranoData = [];
+            const vcerData = [];
+            const ranoColors = [];
+            const vcerColors = [];
+
+            // Procházej jen měření která máš
+            bloodPressureData.mereni.forEach(record => {
+                labels.push(record.datum);
+
+                // RÁNO
+                if (record.rano.sys !== null) {
+                    ranoData.push(record.rano.sys);
+                    ranoColors.push(getColorForBP(record.rano.sys));
+                } else {
+                    ranoData.push(null);
+                    ranoColors.push('#999');
+                }
+
+                // VEČER
+                if (record.vcer.sys !== null) {
+                    vcerData.push(record.vcer.sys);
+                    vcerColors.push(getColorForBP(record.vcer.sys));
+                } else {
+                    vcerData.push(null);
+                    vcerColors.push('#999');
+                }
+            });
+
+            // Zniči starý graf pokud existuje
+            if (bpChart) bpChart.destroy();
+
+            // Vytvoř nový graf
+            bpChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'RÁNO - Systóla (mmHg)',
+                            data: ranoData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: ranoColors,
+                            pointBorderColor: ranoColors,
+                            pointBorderWidth: 2,
+                            spanGaps: true
+                        },
+                        {
+                            label: 'VEČER - Systóla (mmHg)',
+                            data: vcerData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: vcerColors,
+                            pointBorderColor: vcerColors,
+                            pointBorderWidth: 2,
+                            spanGaps: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Trend Krevního Tlaku - Květen 2026'
+                        },
+                        filler: {
+                            propagate: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 100,
+                            max: 160,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' mmHg';
+                                }
+                            },
+                            grid: {
+                                drawBorder: true,
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            display: true,
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getColorForBP(systola) {
+            // Norma - zelená
+            if (systola < 120) return '#10b981';
+            // Zvýšený - žlutá
+            if (systola < 130) return '#f59e0b';
+            // Hypertenze st. 1 - oranžová
+            if (systola < 140) return '#f97316';
+            // Hypertenze st. 2 - červená
+            return '#ef4444';
+        }
+
+        function renderStats() {
+            if (!bloodPressureData || !bloodPressureData.mereni) return;
+
+            const mereni = bloodPressureData.mereni;
+
+            // Spočítej průměry
+            const ranosys = mereni.filter(m => m.rano.sys).map(m => m.rano.sys);
+            const ranoavg = ranosys.length > 0 ? Math.round(ranosys.reduce((a,b) => a+b) / ranosys.length) : 0;
+
+            const vcersys = mereni.filter(m => m.vcer.sys).map(m => m.vcer.sys);
+            const vceravg = vcersys.length > 0 ? Math.round(vcersys.reduce((a,b) => a+b) / vcersys.length) : 0;
+
+            // Najdi min/max
+            const allsys = [...ranosys, ...vcersys];
+            const minbp = Math.min(...allsys);
+            const maxbp = Math.max(...allsys);
+
+            // HTML
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${ranoavg}</div>
+                    <div class="stat-label">Průměr Ráno</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${vceravg}</div>
+                    <div class="stat-label">Průměr Večer</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${minbp}</div>
+                    <div class="stat-label">Nejnižší</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${maxbp}</div>
+                    <div class="stat-label">Nejvyšší</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${mereni.length}</div>
+                    <div class="stat-label">Počet Měření</div>
+                </div>
+            `;
+        }
+
+        // ===================================================================
+        // EVENING RITUAL FUNKCE
+        // ===================================================================
+
+        // Globální proměnné pro storage (localStorage nemusí fungovat na všech zařízeních)
+        let completedDaysData = [];
+
+        function loadCompletedDaysFromStorage() {
+            try {
+                completedDaysData = JSON.parse(localStorage.getItem('completedDays') || '[]');
+            } catch (e) {
+                console.log('localStorage není dostupný, používám globální proměnnou');
+                completedDaysData = [];
+            }
+            return completedDaysData;
+        }
+
+        function saveCompletedDaysToStorage(data) {
+            try {
+                localStorage.setItem('completedDays', JSON.stringify(data));
+            } catch (e) {
+                console.log('Nelze uložit do localStorage, data jsou v paměti');
+            }
+            completedDaysData = data;
+        }
+
+        function addSuccessDay() {
+            const dateInput = document.getElementById('successDate').value;
+
+            if (!dateInput) {
+                displayMessage('❌ Prosím vyber datum!', 'error');
+                return;
+            }
+
+            // Vezmi seznam splnených dní
+            let completedDays = loadCompletedDaysFromStorage();
+
+            // Zkontroluj jestli už je ten den tam
+            if (completedDays.includes(dateInput)) {
+                displayMessage('✅ Tento den je už zaznamenán!', 'success');
+                return;
+            }
+
+            // Přidej nový den
+            completedDays.push(dateInput);
+            completedDays.sort().reverse(); // Seřaď sestupně (nejnovější prvně)
+            saveCompletedDaysToStorage(completedDays);
+
+            // Aktualizuj počet dní bez přejídání
+            document.getElementById('streakCount').textContent = completedDays.length;
+            document.getElementById('dayCount').textContent = completedDays.length;
+
+            // Vyčisti input
+            document.getElementById('successDate').value = '';
+
+            // Obnov seznam
+            renderCompletedDays();
+
+            displayMessage('✅ Rituál zaznamenán pro ' + formatDate(dateInput) + '! 🎉', 'success');
+        }
+
+        function calculateStreakValue(completedDays) {
+            if (completedDays.length === 0) {
+                return 0;
+            }
+
+            let streak = 0;
+            const today = new Date();
+
+            for (let i = 0; i < completedDays.length; i++) {
+                const dateStr = completedDays[i];
+                const date = new Date(dateStr);
+
+                // Spočítej rozdíl dnů od dneška
+                const daysDiff = Math.floor((today - date) / (1000 * 60 * 60 * 24));
+
+                // Pokud jsou dny v řadě (0, 1, 2, 3...)
+                if (daysDiff === i) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+
+            return streak;
+        }
+
+        function calculateStreak(completedDays) {
+            if (completedDays.length === 0) {
+                document.getElementById('streakCount').textContent = 0;
+                return;
+            }
+
+            // Setřídím dny (měly by být setříděné)
+            const sorted = completedDays.sort().reverse();
+
+            let streak = 0;
+            const today = new Date();
+
+            for (let i = 0; i < sorted.length; i++) {
+                const dateStr = sorted[i];
+                const date = new Date(dateStr);
+
+                // Spočítej rozdíl dnů od dneška
+                const daysDiff = Math.floor((today - date) / (1000 * 60 * 60 * 24));
+
+                // Pokud jsou dny v řadě (0, 1, 2, 3...)
+                if (daysDiff === i) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+
+            document.getElementById('streakCount').textContent = streak;
+        }
+
+        function renderCompletedDays() {
+            const completedDays = loadCompletedDaysFromStorage();
+            const list = document.getElementById('completedDaysList');
+
+            if (completedDays.length === 0) {
+                list.innerHTML = '<div style="opacity: 0.7;">Zatím žádné dny...</div>';
+                return;
+            }
+
+            // Seřaď od nejnovějšího
+            const sorted = [...completedDays].sort().reverse();
+            let html = '';
+
+            sorted.forEach(day => {
+                html += `<div style="padding: 8px; background: rgba(255,255,255,0.05); margin: 5px 0; border-radius: 5px; border-left: 3px solid #10b981; display: flex; justify-content: space-between; align-items: center;">
+                    <span>✅ ${formatDate(day)}</span>
+                    <button onclick="removeDay('${day}')" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;">✕ Smazat</button>
+                </div>`;
+            });
+
+            list.innerHTML = html;
+        }
+
+        function removeDay(dateStr) {
+            if (!confirm('Smazat ' + formatDate(dateStr) + '?')) {
+                return;
+            }
+
+            let completedDays = loadCompletedDaysFromStorage();
+            completedDays = completedDays.filter(d => d !== dateStr);
+            saveCompletedDaysToStorage(completedDays);
+
+            // Aktualizuj display
             const streak = calculateStreakValue(completedDays);
             document.getElementById('streakCount').textContent = streak;
             document.getElementById('dayCount').textContent = completedDays.length;
