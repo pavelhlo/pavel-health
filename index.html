@@ -866,73 +866,60 @@
 
         // Globální proměnné pro storage - INDEXEDDB pro trvalost
         let completedDaysData = [];
-        let db = null;
 
-        function initIndexedDB() {
-            return new Promise((resolve) => {
-                const request = indexedDB.open('PavelHealth', 1);
+        // ===================================================================
+        // JSONBIN.IO — centrální úložiště pro synchronizaci mezi zařízeními
+        // ===================================================================
+        const JSONBIN_BIN_ID = '6a2079a2da38895dfe8290e9';
+        const JSONBIN_API_KEY = '$2a$10$IijJBLlIj1/j4T4I5js/JeyNmTF4Suui6q3xw0DQBZzgS8qfyy2L.';
+        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
-                request.onerror = () => {
-                    console.log('IndexedDB se neotevřel');
-                    resolve(false);
-                };
-
-                request.onsuccess = (event) => {
-                    db = event.target.result;
-                    resolve(true);
-                };
-
-                request.onupgradeneeded = (event) => {
-                    const database = event.target.result;
-                    if (!database.objectStoreNames.contains('completedDays')) {
-                        database.createObjectStore('completedDays', { keyPath: 'id' });
-                    }
-                };
-            });
+        async function loadCompletedDaysFromCloud() {
+            try {
+                const res = await fetch(JSONBIN_URL + '/latest', {
+                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const json = await res.json();
+                completedDaysData = json.record.completedDays || [];
+                updateDayCountDisplay();
+                renderCompletedDays();
+                console.log('✅ Splněné dny načteny z cloudu:', completedDaysData.length);
+            } catch (e) {
+                console.log('⚠️ Chyba při načítání z JSONBin:', e.message);
+            }
         }
+
+        async function saveCompletedDaysToCloud(data) {
+            completedDaysData = data;
+            updateDayCountDisplay();
+            try {
+                await fetch(JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify({ completedDays: data })
+                });
+                console.log('✅ Splněné dny uloženy do cloudu');
+            } catch (e) {
+                console.log('⚠️ Chyba při ukládání do JSONBin:', e.message);
+            }
+        }
+
+        function initIndexedDB() { return Promise.resolve(true); }
 
         function loadCompletedDaysFromStorage() {
             return completedDaysData;
         }
 
         function saveCompletedDaysToStorage(data) {
-            completedDaysData = data;
-
-            // Uloži do IndexedDB
-            if (db) {
-                try {
-                    const transaction = db.transaction(['completedDays'], 'readwrite');
-                    const store = transaction.objectStore('completedDays');
-                    store.put({ id: 1, data: data });
-                } catch (e) {
-                    console.log('Chyba při zápisu do IndexedDB');
-                }
-            }
-
-            // Aktualizuj display
-            updateDayCountDisplay();
+            saveCompletedDaysToCloud(data);
         }
 
         function initializeFromStorage() {
-            // Při startu: načti z IndexedDB
-            if (db) {
-                try {
-                    const transaction = db.transaction(['completedDays'], 'readonly');
-                    const store = transaction.objectStore('completedDays');
-                    const request = store.get(1);
-
-                    request.onsuccess = () => {
-                        if (request.result && request.result.data) {
-                            completedDaysData = request.result.data;
-                            // Aktualizuj UI
-                            updateDayCountDisplay();
-                            renderCompletedDays();
-                        }
-                    };
-                } catch (e) {
-                    console.log('Chyba při čtení z IndexedDB');
-                }
-            }
+            loadCompletedDaysFromCloud();
         }
 
         function setStartDate() {
