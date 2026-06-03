@@ -342,12 +342,17 @@
         <div id="blood-pressure" class="tab-content active">
             <!-- LOAD JSON -->
             <div class="load-json-section">
-                <h3>📁 Načti Měření z JSON</h3>
-                <p>Vyber soubor <code>tlak_data.json</code> ze své složky:</p>
-                <input type="file" id="jsonFile" accept=".json" onchange="loadJSON(event)">
-                <button class="btn-primary" onclick="document.getElementById('jsonFile').click()">
-                    Vyber JSON soubor
-                </button>
+                <h3>📡 Data z GitHubu</h3>
+                <p>Data se načítají automaticky z <code>github.com/pavelhlo/pavel-health</code></p>
+                <button class="btn-primary" onclick="loadFromGitHub()">🔄 Obnovit data</button>
+                <span id="github-status" style="margin-left:12px; font-size:0.9em; color:#888;"></span>
+                <details style="margin-top:12px;">
+                    <summary style="cursor:pointer; color:#888; font-size:0.85em;">📁 Nebo načti ručně ze souboru</summary>
+                    <div style="margin-top:8px;">
+                        <input type="file" id="jsonFile" accept=".json" onchange="loadJSON(event)">
+                        <button class="btn-primary" onclick="document.getElementById('jsonFile').click()">Vyber JSON soubor</button>
+                    </div>
+                </details>
             </div>
 
             <div id="bp-message" class="message"></div>
@@ -595,6 +600,33 @@
         // ===================================================================
         // FUNKCE NA ČTENÍ JSON
         // ===================================================================
+
+        // ===================================================================
+        // NAČTENÍ DAT Z GITHUBU
+        // ===================================================================
+
+        const GITHUB_URL = 'https://raw.githubusercontent.com/pavelhlo/pavel-health/main/tlak_data.json';
+
+        async function loadFromGitHub() {
+            const status = document.getElementById('github-status');
+            status.textContent = '⏳ Načítám...';
+            try {
+                const response = await fetch(GITHUB_URL + '?t=' + Date.now());
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                bloodPressureData = await response.json();
+                status.textContent = '✅ Načteno z GitHubu (' + new Date().toLocaleTimeString('cs-CZ') + ')';
+                status.style.color = '#4caf50';
+                renderBloodPressureData();
+            } catch (error) {
+                status.textContent = '❌ Chyba: ' + error.message;
+                status.style.color = '#e53935';
+            }
+        }
+
+        // Automatické načtení při otevření stránky
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromGitHub();
+        });
 
         function loadJSON(event) {
             const file = event.target.files[0];
