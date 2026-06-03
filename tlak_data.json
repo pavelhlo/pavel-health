@@ -1,0 +1,175 @@
+{
+  "posledni_aktualizace": "2026-06-03T06:03:51.995700",
+  "pocet_mereni": 13,
+  "mereni": [
+    {
+      "datum": "21.05.2026",
+      "rano": {
+        "sys": 120,
+        "dia": 80,
+        "tep": 57
+      },
+      "vcer": {
+        "sys": 120,
+        "dia": 80,
+        "tep": 57
+      }
+    },
+    {
+      "datum": "22.05.2026",
+      "rano": {
+        "sys": 141,
+        "dia": 77,
+        "tep": 59
+      },
+      "vcer": {
+        "sys": 124,
+        "dia": 70,
+        "tep": 55
+      }
+    },
+    {
+      "datum": "24.05.2026",
+      "rano": {
+        "sys": null,
+        "dia": null,
+        "tep": null
+      },
+      "vcer": {
+        "sys": 124,
+        "dia": 70,
+        "tep": 55
+      }
+    },
+    {
+      "datum": "25.05.2026",
+      "rano": {
+        "sys": 122,
+        "dia": 80,
+        "tep": 59
+      },
+      "vcer": {
+        "sys": 126,
+        "dia": 72,
+        "tep": 57
+      }
+    },
+    {
+      "datum": "26.05.2026",
+      "rano": {
+        "sys": 133,
+        "dia": 80,
+        "tep": 50
+      },
+      "vcer": {
+        "sys": 120,
+        "dia": 76,
+        "tep": 59
+      }
+    },
+    {
+      "datum": "27.05.2026",
+      "rano": {
+        "sys": 124,
+        "dia": 79,
+        "tep": 52
+      },
+      "vcer": {
+        "sys": 113,
+        "dia": 71,
+        "tep": 54
+      }
+    },
+    {
+      "datum": "28.05.2026",
+      "rano": {
+        "sys": 118,
+        "dia": 74,
+        "tep": 56
+      },
+      "vcer": {
+        "sys": 131,
+        "dia": 79,
+        "tep": 57
+      }
+    },
+    {
+      "datum": "29.05.2026",
+      "rano": {
+        "sys": 121,
+        "dia": 76,
+        "tep": 54
+      },
+      "vcer": {
+        "sys": 135,
+        "dia": 78,
+        "tep": 51
+      }
+    },
+    {
+      "datum": "30.05.2026",
+      "rano": {
+        "sys": 112,
+        "dia": 72,
+        "tep": 60
+      },
+      "vcer": {
+        "sys": null,
+        "dia": null,
+        "tep": null
+      }
+    },
+    {
+      "datum": "31.05.2026",
+      "rano": {
+        "sys": null,
+        "dia": null,
+        "tep": null
+      },
+      "vcer": {
+        "sys": 126,
+        "dia": 76,
+        "tep": 53
+      }
+    },
+    {
+      "datum": "01.06.2026",
+      "rano": {
+        "sys": 121,
+        "dia": 78,
+        "tep": 60
+      },
+      "vcer": {
+        "sys": null,
+        "dia": null,
+        "tep": null
+      }
+    },
+    {
+      "datum": "02.06.2026",
+      "rano": {
+        "sys": 120,
+        "dia": 75,
+        "tep": 52
+      },
+      "vcer": {
+        "sys": 127,
+        "dia": 77,
+        "tep": 61
+      }
+    },
+    {
+      "datum": "03.06.2026",
+      "rano": {
+        "sys": 117,
+        "dia": 82,
+        "tep": 56
+      },
+      "vcer": {
+        "sys": null,
+        "dia": null,
+        "tep": null
+      }
+    }
+  ]
+}

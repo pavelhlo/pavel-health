@@ -1,0 +1,8 @@
+# Dočasné soubory
+~$*
+*.tmp
+.DS_Store
+
+# Citlivá data — nepushovat
+*.key
+*.pem
