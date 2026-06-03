@@ -1252,20 +1252,14 @@
         // ===================================================================
 
         window.addEventListener('DOMContentLoaded', async function() {
-            // Inicializuj IndexedDB a načti data
-            await initIndexedDB();
-            initializeFromStorage();
+            // Načti data z cloudu (async) — updateDayCountDisplay se zavolá uvnitř po načtení
+            await loadCompletedDaysFromCloud();
 
             // Studium
             const week = localStorage.getItem('studyWeek') || 1;
             currentWeek = parseInt(week);
             document.getElementById('studyWeek').textContent = currentWeek;
             renderStudyWeek();
-
-            // Evening Ritual - Streak
-            const completedDays = loadCompletedDaysFromStorage();
-            updateDayCountDisplay();
-            renderCompletedDays();
 
             // Nastav input na počáteční datum pokud existuje
             const startDate = localStorage.getItem('transformationStartDate');
