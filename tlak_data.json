@@ -1,6 +1,6 @@
 {
-  "posledni_aktualizace": "2026-06-04T06:04:22.153567",
-  "pocet_mereni": 13,
+  "posledni_aktualizace": "2026-06-04T21:10:35.470707",
+  "pocet_mereni": 14,
   "mereni": [
     {
       "datum": "21.05.2026",
@@ -169,6 +169,19 @@
         "sys": 128,
         "dia": 77,
         "tep": 60
+      }
+    },
+    {
+      "datum": "04.06.2026",
+      "rano": {
+        "sys": 117,
+        "dia": 78,
+        "tep": 56
+      },
+      "vcer": {
+        "sys": null,
+        "dia": null,
+        "tep": null
       }
     }
   ]
