@@ -1,5 +1,5 @@
 {
-  "posledni_aktualizace": "2026-06-05T04:41:28.424570",
+  "posledni_aktualizace": "2026-06-05T20:49:31.645931",
   "pocet_mereni": 15,
   "mereni": [
     {
@@ -192,9 +192,9 @@
         "tep": 56
       },
       "vcer": {
-        "sys": null,
-        "dia": null,
-        "tep": null
+        "sys": 123,
+        "dia": 75,
+        "tep": 62
       }
     }
   ]
