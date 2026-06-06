@@ -6,3 +6,4 @@
 # Citlivá data — nepushovat
 *.key
 *.pem
+git_push.sh
