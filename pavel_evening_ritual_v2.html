@@ -211,6 +211,74 @@
             margin-top: 10px;
         }
 
+        /* KALENDÁŘ */
+        .calendar-month {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 280px;
+        }
+
+        .calendar-month h4 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #1f2937;
+            margin: 0 0 15px 0;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.8em;
+            color: #666;
+            padding: 5px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: all 0.2s;
+            border: 2px solid #ddd;
+        }
+
+        .calendar-day:hover {
+            transform: scale(1.05);
+        }
+
+        .calendar-day.completed {
+            background: #10b981;
+            color: white;
+            border-color: #059669;
+        }
+
+        .calendar-day.failed {
+            background: #ef4444;
+            color: white;
+            border-color: #dc2626;
+        }
+
+        .calendar-day.empty {
+            background: #f3f4f6;
+            color: #999;
+            cursor: default;
+        }
+
+        .calendar-day.empty:hover {
+            transform: none;
+        }
+
         .buttons {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -465,11 +533,28 @@
                 </div>
 
                 <div class="ritual-section">
-                    <h3>📅 Zaznamenat Splnění Rituálu</h3>
-                    <p style="margin: 10px 0;">Vyber datum kdy se ti rituál povedl:</p>
+                    <h3>📅 Zaznamenat Splnění/Nesplnění</h3>
+                    <p style="margin: 10px 0;">Vyber datum a status:</p>
                     <input type="date" id="successDate" style="padding: 10px; border: 2px solid white; border-radius: 5px; margin: 10px 0; font-size: 1em;">
-                    <div style="margin-top: 10px; font-size: 0.9em; opacity: 0.9;">
-                        💡 Tip: Pokud zapomeneš kliknout, můžeš se vrátit a zaznamenat včerejší den
+
+                    <div style="margin-top: 15px;">
+                        <label style="display: inline-block; margin-right: 20px; font-size: 1em;">
+                            <input type="radio" name="dayStatus" value="completed" checked> ✅ Splnění
+                        </label>
+                        <label style="display: inline-block; font-size: 1em;">
+                            <input type="radio" name="dayStatus" value="failed"> ❌ Nesplnění
+                        </label>
+                    </div>
+
+                    <button class="action-btn btn-success" onclick="recordDayStatus()" style="margin-top: 15px;">
+                        💾 Zaznamenat Den
+                    </button>
+                </div>
+
+                <div class="ritual-section">
+                    <h3>📆 Kalendář Transformace</h3>
+                    <div style="margin-top: 15px; overflow-x: auto;">
+                        <div id="calendarContainer" style="display: flex; gap: 20px; flex-wrap: wrap;"></div>
                     </div>
                 </div>
 

@@ -7,3 +7,5 @@
 *.key
 *.pem
 git_push.sh
+git_push.sh
+setup_git.sh
