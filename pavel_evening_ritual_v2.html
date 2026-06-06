@@ -999,7 +999,46 @@
             await saveToCloud(data);
         }
 
-        function initIndexedDB() { return Promise.resolve(true); }
+        function initIndexedDB() {
+            return new Promise((resolve) => {
+                try {
+                    const request = indexedDB.open('PavelHealth', 2);
+                    request.onsuccess = (event) => {
+                        db = event.target.result;
+                        resolve(true);
+                    };
+                    request.onerror = () => {
+                        resolve(false);
+                    };
+                    request.onupgradeneeded = (event) => {
+                        const database = event.target.result;
+                        if (!database.objectStoreNames.contains('dayStatuses')) {
+                            database.createObjectStore('dayStatuses', { keyPath: 'id' });
+                        }
+                    };
+                } catch (e) {
+                    resolve(false);
+                }
+            });
+        }
+
+        function loadDayStatusesFromStorage() {
+            if (db) {
+                try {
+                    const transaction = db.transaction(['dayStatuses'], 'readonly');
+                    const store = transaction.objectStore('dayStatuses');
+                    const request = store.get(1);
+                    request.onsuccess = () => {
+                        if (request.result && request.result.data) {
+                            dayStatuses = request.result.data;
+                            renderCalendar();
+                        }
+                    };
+                } catch (e) {
+                    console.log('Chyba při čtení dayStatuses');
+                }
+            }
+        }
 
         function loadCompletedDaysFromStorage() {
             return completedDaysData;
