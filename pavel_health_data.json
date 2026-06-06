@@ -1,8 +1,8 @@
 {
-  "completedDaysData": "[\"2026-06-04\",\"2026-06-05\"]",
+  "completedDaysData": "[\"2026-06-04\",\"2026-06-05\",\"2026-06-03\"]",
   "transformationStartDate": "2026-05-26",
   "dayStatuses": "{\"2026-06-04\":\"completed\",\"2026-06-05\":\"failed\"}",
   "studyWeek": "1",
   "completedWeeks": null,
-  "syncedAt": "2026-06-06T18:28:22.077Z"
+  "syncedAt": "2026-06-06T18:29:34.665Z"
 }
