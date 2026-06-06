@@ -1023,21 +1023,34 @@
         }
 
         function loadDayStatusesFromStorage() {
-            if (db) {
-                try {
-                    const transaction = db.transaction(['dayStatuses'], 'readonly');
-                    const store = transaction.objectStore('dayStatuses');
-                    const request = store.get(1);
-                    request.onsuccess = () => {
-                        if (request.result && request.result.data) {
-                            dayStatuses = request.result.data;
-                            renderCalendar();
-                        }
-                    };
-                } catch (e) {
-                    console.log('Chyba při čtení dayStatuses');
+            return new Promise((resolve) => {
+                if (db) {
+                    try {
+                        const transaction = db.transaction(['dayStatuses'], 'readonly');
+                        const store = transaction.objectStore('dayStatuses');
+                        const request = store.get(1);
+                        request.onsuccess = () => {
+                            if (request.result && request.result.data) {
+                                dayStatuses = request.result.data;
+                                console.log('✅ dayStatuses loaded from IndexedDB:', dayStatuses);
+                            } else {
+                                console.log('ℹ️ Žádné dayStatuses v indexedDB, začínáme s prázdným objektem');
+                            }
+                            resolve();
+                        };
+                        request.onerror = () => {
+                            console.log('❌ Chyba při čtení dayStatuses z IndexedDB');
+                            resolve();
+                        };
+                    } catch (e) {
+                        console.log('❌ Chyba při čtení dayStatuses:', e);
+                        resolve();
+                    }
+                } else {
+                    console.log('⚠️ db není připraven');
+                    resolve();
                 }
-            }
+            });
         }
 
         function loadCompletedDaysFromStorage() {
@@ -1111,18 +1124,30 @@
                 return;
             }
 
-            // Zaznamenej stav dne
+            console.log(`📝 Zaznamenávám den: ${dateInput}, status: ${status}`);
+
+            // Zaznamenej stav dne v paměti
             dayStatuses[dateInput] = status;
+            console.log('✅ Stav uložen v paměti:', dayStatuses);
 
             // Uloži do IndexedDB
             if (db) {
                 try {
                     const transaction = db.transaction(['dayStatuses'], 'readwrite');
                     const store = transaction.objectStore('dayStatuses');
-                    store.put({ id: 1, data: dayStatuses });
+                    const request = store.put({ id: 1, data: dayStatuses });
+
+                    request.onsuccess = () => {
+                        console.log('✅ Úspěšně zapsáno do IndexedDB');
+                    };
+                    request.onerror = () => {
+                        console.log('❌ Chyba při zápisu do IndexedDB:', request.error);
+                    };
                 } catch (e) {
-                    console.log('Chyba při zápisu');
+                    console.log('❌ Chyba pri vytváření transakce:', e);
                 }
+            } else {
+                console.log('⚠️ db není inicializováno!');
             }
 
             // Zobraz zprávu
@@ -1251,18 +1276,31 @@
         }
 
         function toggleDayStatus(dateStr) {
+            console.log(`🔄 Přepínám stav dne ${dateStr}`);
+
             // Přepni mezi completed a failed
-            dayStatuses[dateStr] = dayStatuses[dateStr] === 'completed' ? 'failed' : 'completed';
+            const newStatus = dayStatuses[dateStr] === 'completed' ? 'failed' : 'completed';
+            dayStatuses[dateStr] = newStatus;
+            console.log(`✅ Nový stav pro ${dateStr}: ${newStatus}`);
 
             // Uloži do IndexedDB
             if (db) {
                 try {
                     const transaction = db.transaction(['dayStatuses'], 'readwrite');
                     const store = transaction.objectStore('dayStatuses');
-                    store.put({ id: 1, data: dayStatuses });
+                    const request = store.put({ id: 1, data: dayStatuses });
+
+                    request.onsuccess = () => {
+                        console.log('✅ Úspěšně zapsáno do IndexedDB');
+                    };
+                    request.onerror = () => {
+                        console.log('❌ Chyba při zápisu do IndexedDB:', request.error);
+                    };
                 } catch (e) {
-                    console.log('Chyba při zápisu');
+                    console.log('❌ Chyba pri vytváření transakce:', e);
                 }
+            } else {
+                console.log('⚠️ db není inicializováno!');
             }
 
             renderCalendar();
@@ -1452,26 +1490,37 @@
         // ===================================================================
 
         window.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 DOMContentLoaded - Inicializuji aplikaci...');
+
             // Inicializuj IndexedDB
+            console.log('1️⃣ Inicializuji IndexedDB...');
             await initIndexedDB();
+            console.log('✅ IndexedDB inicializován');
 
             // Načti dayStatuses z IndexedDB
-            loadDayStatusesFromStorage();
+            console.log('2️⃣ Načítám dayStatuses...');
+            await loadDayStatusesFromStorage();
+            console.log('✅ dayStatuses načteny');
 
             // Studium
+            console.log('3️⃣ Inicializuji studijní plán...');
             const week = localStorage.getItem('studyWeek') || 1;
             currentWeek = parseInt(week);
             document.getElementById('studyWeek').textContent = currentWeek;
             renderStudyWeek();
+            console.log('✅ Studijní plán inicializován - Týden ' + currentWeek);
 
             // Evening Ritual - inicializuj display
+            console.log('4️⃣ Inicializuji Evening Ritual...');
             updateDayCountDisplay();
             renderCalendar();
+            console.log('✅ Evening Ritual inicializován');
 
             // Nastav input na počáteční datum pokud existuje
             const startDate = localStorage.getItem('transformationStartDate');
             if (startDate) {
                 document.getElementById('startDate').value = startDate;
+                console.log('✅ Start date nastaven: ' + startDate);
             }
 
             // Nastav datum na dneska
@@ -1479,6 +1528,9 @@
             const todayStr = today.toISOString().split('T')[0];
             document.getElementById('successDate').value = todayStr;
             document.getElementById('successDate').min = '2026-04-01'; // Start tvého plánu
+            console.log('✅ Dnešní datum: ' + todayStr);
+
+            console.log('✨ Aplikace plně inicializována!');
         });
     </script>
 </body>
