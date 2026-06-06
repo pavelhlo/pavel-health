@@ -950,13 +950,8 @@
         // ===================================================================
 
         // Globální proměnné pro storage - INDEXEDDB pro trvalost
-        let completedDaysData = [];
-
-        // ===================================================================
-        // JSONBIN.IO — centrální úložiště pro synchronizaci mezi zařízeními
-        // ===================================================================
-        const JSONBIN_BIN_ID = '6a2079a2da38895dfe8290e9';
-        const JSONBIN_API_KEY = '$2a$10$IijJBLlIj1/j4T4I5js/JeyNmTF4Suui6q3xw0DQBZzgS8qfyy2L.';
+        let dayStatuses = {}; // { "2026-05-24": "completed" nebo "failed" }
+        let db = null;
         const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
         async function loadCompletedDaysFromCloud() {
