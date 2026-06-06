@@ -1063,39 +1063,41 @@
             }
         }
 
-        function addSuccessDay() {
+        function recordDayStatus() {
             const dateInput = document.getElementById('successDate').value;
+            const status = document.querySelector('input[name="dayStatus"]:checked').value;
 
             if (!dateInput) {
                 displayMessage('❌ Prosím vyber datum!', 'error');
                 return;
             }
 
-            // Vezmi seznam splnených dní
-            let completedDays = loadCompletedDaysFromStorage();
+            // Zaznamenej stav dne
+            dayStatuses[dateInput] = status;
 
-            // Zkontroluj jestli už je ten den tam
-            if (completedDays.includes(dateInput)) {
-                displayMessage('✅ Tento den je už zaznamenán!', 'success');
-                return;
+            // Uloži do IndexedDB
+            if (db) {
+                try {
+                    const transaction = db.transaction(['dayStatuses'], 'readwrite');
+                    const store = transaction.objectStore('dayStatuses');
+                    store.put({ id: 1, data: dayStatuses });
+                } catch (e) {
+                    console.log('Chyba při zápisu');
+                }
             }
 
-            // Přidej nový den
-            completedDays.push(dateInput);
-            completedDays.sort().reverse(); // Seřaď sestupně (nejnovější prvně)
-            saveCompletedDaysToStorage(completedDays);
+            // Zobraz zprávu
+            const statusText = status === 'completed' ? '✅ Splnění' : '❌ Nesplnění';
+            displayMessage(`${statusText} zaznamenáno pro ${formatDate(dateInput)}!`, 'success');
 
-            // Aktualizuj počet dní bez přejídání
-            document.getElementById('streakCount').textContent = completedDays.length;
-            document.getElementById('dayCount').textContent = completedDays.length;
-
-            // Vyčisti input
+            // Vyčisti a rerender
             document.getElementById('successDate').value = '';
+            updateDayCountDisplay();
+            renderCalendar();
+        }
 
-            // Obnov seznam
-            renderCompletedDays();
-
-            displayMessage('✅ Rituál zaznamenán pro ' + formatDate(dateInput) + '! 🎉', 'success');
+        function addSuccessDay() {
+            recordDayStatus();
         }
 
         function calculateStreakValue(completedDays) {
@@ -1152,6 +1154,85 @@
             }
 
             document.getElementById('streakCount').textContent = streak;
+        }
+
+        function renderCalendar() {
+            const startDateStr = localStorage.getItem('transformationStartDate');
+            if (!startDateStr) {
+                document.getElementById('calendarContainer').innerHTML = '<p style="opacity: 0.7;">Nastav počátek transformace</p>';
+                return;
+            }
+
+            const startDate = new Date(startDateStr);
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+
+            let html = '';
+
+            // Vytvoř kalendář pro aktuální měsíc
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay();
+
+            html += `<div class="calendar-month">
+                <h4>${getMonthName(currentMonth)} ${currentYear}</h4>
+                <div class="calendar-grid">`;
+
+            // Naglavní řádky dnů v týdnu
+            const dayHeaders = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
+            dayHeaders.forEach(day => {
+                html += `<div class="calendar-day-header">${day}</div>`;
+            });
+
+            // Prázdná pole na začátku měsíce
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                html += `<div class="calendar-day empty"></div>`;
+            }
+
+            // Dny měsíce
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentYear, currentMonth, day);
+                const dateStr = date.toISOString().split('T')[0];
+
+                // Kontrola jestli je den v rozsahu transformace
+                if (date < startDate || date > today) {
+                    html += `<div class="calendar-day empty"></div>`;
+                } else {
+                    const status = dayStatuses[dateStr] || 'completed';
+                    const statusClass = status === 'completed' ? 'completed' : 'failed';
+                    html += `<div class="calendar-day ${statusClass}" onclick="toggleDayStatus('${dateStr}')">${day}</div>`;
+                }
+            }
+
+            html += `</div></div>`;
+
+            document.getElementById('calendarContainer').innerHTML = html;
+        }
+
+        function toggleDayStatus(dateStr) {
+            // Přepni mezi completed a failed
+            dayStatuses[dateStr] = dayStatuses[dateStr] === 'completed' ? 'failed' : 'completed';
+
+            // Uloži do IndexedDB
+            if (db) {
+                try {
+                    const transaction = db.transaction(['dayStatuses'], 'readwrite');
+                    const store = transaction.objectStore('dayStatuses');
+                    store.put({ id: 1, data: dayStatuses });
+                } catch (e) {
+                    console.log('Chyba při zápisu');
+                }
+            }
+
+            renderCalendar();
+            updateDayCountDisplay();
+        }
+
+        function getMonthName(month) {
+            const months = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
+            return months[month];
         }
 
         function renderCompletedDays() {
