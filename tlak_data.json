@@ -1,6 +1,6 @@
 {
-  "posledni_aktualizace": "2026-06-06T19:25:56.270471",
-  "pocet_mereni": 16,
+  "posledni_aktualizace": "2026-06-11T16:37:49.045630",
+  "pocet_mereni": 21,
   "mereni": [
     {
       "datum": "21.05.2026",
@@ -203,6 +203,71 @@
         "sys": 118,
         "dia": 74,
         "tep": 54
+      },
+      "vcer": {
+        "sys": 109,
+        "dia": 72,
+        "tep": 57
+      }
+    },
+    {
+      "datum": "07.06.2026",
+      "rano": {
+        "sys": 117,
+        "dia": 77,
+        "tep": 55
+      },
+      "vcer": {
+        "sys": null,
+        "dia": null,
+        "tep": null
+      }
+    },
+    {
+      "datum": "08.06.2026",
+      "rano": {
+        "sys": null,
+        "dia": null,
+        "tep": null
+      },
+      "vcer": {
+        "sys": 120,
+        "dia": 77,
+        "tep": 53
+      }
+    },
+    {
+      "datum": "09.06.2026",
+      "rano": {
+        "sys": 105,
+        "dia": 74,
+        "tep": 54
+      },
+      "vcer": {
+        "sys": 118,
+        "dia": 77,
+        "tep": 59
+      }
+    },
+    {
+      "datum": "10.06.2026",
+      "rano": {
+        "sys": 115,
+        "dia": 77,
+        "tep": 51
+      },
+      "vcer": {
+        "sys": 110,
+        "dia": 71,
+        "tep": 66
+      }
+    },
+    {
+      "datum": "11.06.2026",
+      "rano": {
+        "sys": 118,
+        "dia": 77,
+        "tep": 62
       },
       "vcer": {
         "sys": null,

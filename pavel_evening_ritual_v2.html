@@ -573,10 +573,30 @@
                     </button>
                 </div>
 
+                <div class="buttons" style="margin-top: 15px;">
+                    <button class="action-btn btn-primary" onclick="exportData()">
+                        📥 Exportovat Data
+                    </button>
+                    <button class="action-btn btn-primary" onclick="document.getElementById('importFile').click()">
+                        📤 Importovat Data
+                    </button>
+                    <input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display: none;">
+                </div>
+
                 <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                    <h4>📋 Splnění Dny:</h4>
-                    <div id="completedDaysList" style="margin-top: 10px; max-height: 200px; overflow-y: auto;">
-                        <!-- Seznám dní se vloží JavaScriptem -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <h4>✅ Splnění Dny:</h4>
+                            <div id="completedDaysList" style="margin-top: 10px; max-height: 200px; overflow-y: auto;">
+                                <!-- Seznám dní se vloží JavaScriptem -->
+                            </div>
+                        </div>
+                        <div>
+                            <h4>❌ Nesplnění Dny:</h4>
+                            <div id="failedDaysList" style="margin-top: 10px; max-height: 200px; overflow-y: auto;">
+                                <!-- Seznám dní se vloží JavaScriptem -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -951,52 +971,55 @@
 
         // Globální proměnné pro storage - INDEXEDDB pro trvalost
         let dayStatuses = {}; // { "2026-05-24": "completed" nebo "failed" }
+        let completedDaysData = []; // [2026-05-24, 2026-05-25, ...] - dny bez přejídání
         let db = null;
-        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
-        async function loadCompletedDaysFromCloud() {
-            try {
-                const res = await fetch(JSONBIN_URL + '/latest', {
-                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
-                });
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const json = await res.json();
-                completedDaysData = json.record.completedDays || [];
-                // Načti startDate z cloudu pokud existuje
-                if (json.record.startDate) {
-                    localStorage.setItem('transformationStartDate', json.record.startDate);
+        // Kalendář - navigace mezi měsíci
+        let displayMonth = new Date().getMonth();
+        let displayYear = new Date().getFullYear();
+
+        // ===== GITHUB SYNCHRONIZACE =====
+        const GITHUB_CONFIG = {
+            owner: 'pavelhlo',
+            repo: 'pavel-health',
+            token: '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',
+            filePath: 'pavel_health_data.json'
+        };
+
+        // ===== STORAGE FUNKCE - localStorage pro persistenci =====
+        function loadCompletedDaysFromStorage() {
+            const stored = localStorage.getItem('completedDaysData');
+            if (stored) {
+                try {
+                    completedDaysData = JSON.parse(stored);
+                    console.log('✅ completedDaysData načteny z localStorage:', completedDaysData);
+
+                    // Inicializuj dayStatuses z completedDaysData
+                    completedDaysData.forEach(date => {
+                        if (!dayStatuses[date]) {
+                            dayStatuses[date] = 'completed';
+                        }
+                    });
+                } catch (e) {
+                    console.log('❌ Chyba při čtení completedDaysData:', e);
                 }
-                updateDayCountDisplay();
-                renderCompletedDays();
-                console.log('✅ Data načtena z cloudu');
-            } catch (e) {
-                console.log('⚠️ Chyba při načítání z JSONBin:', e.message);
             }
+            // DŮLEŽITÉ: Vrať completedDaysData!
+            return completedDaysData;
         }
 
-        async function saveToCloud(completedDays, startDate) {
-            try {
-                await fetch(JSONBIN_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': JSONBIN_API_KEY
-                    },
-                    body: JSON.stringify({
-                        completedDays: completedDays,
-                        startDate: startDate || localStorage.getItem('transformationStartDate') || null
-                    })
-                });
-                console.log('✅ Data uložena do cloudu');
-            } catch (e) {
-                console.log('⚠️ Chyba při ukládání do JSONBin:', e.message);
-            }
-        }
-
-        async function saveCompletedDaysToCloud(data) {
+        function saveCompletedDaysToStorage(data) {
             completedDaysData = data;
+            localStorage.setItem('completedDaysData', JSON.stringify(data));
+            console.log('💾 completedDaysData uloženy do localStorage');
             updateDayCountDisplay();
-            await saveToCloud(data);
+
+            // Automaticky uploaduj na GitHub
+            uploadDataToGitHub().then(success => {
+                if (success) {
+                    console.log('☁️ Data synchronizována s GitHubem');
+                }
+            });
         }
 
         function initIndexedDB() {
@@ -1053,17 +1076,6 @@
             });
         }
 
-        function loadCompletedDaysFromStorage() {
-            return completedDaysData;
-        }
-
-        function saveCompletedDaysToStorage(data) {
-            saveCompletedDaysToCloud(data);
-        }
-
-        function initializeFromStorage() {
-            loadCompletedDaysFromCloud();
-        }
 
         function setStartDate() {
             const startDate = document.getElementById('startDate').value;
@@ -1076,8 +1088,8 @@
                 localStorage.setItem('transformationStartDate', startDate);
                 displayMessage('✅ Počátek transformace nastaven na ' + formatDate(startDate) + '!', 'success');
                 updateDayCountDisplay();
-                // Ulož startDate do cloudu
-                saveToCloud(completedDaysData, startDate);
+                renderCalendar();
+                console.log('✅ Počátek transformace uložen do localStorage');
             } catch (e) {
                 console.log('Chyba při nastavování data');
             }
@@ -1089,8 +1101,15 @@
             let daysSinceStart = 0;
 
             if (startDateStr) {
-                const startDate = new Date(startDateStr);
+                // Parsuj jako místní čas (ne UTC!) - stejně jako v kalendáři
+                const parts = startDateStr.split('-');
+                const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+
                 const today = new Date();
+                // Nastav time na midnight pro obě data aby se počítaly jen dny
+                startDate.setHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
+
                 const timeDiff = today - startDate;
                 daysSinceStart = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1; // +1 aby počáteční den byl Den 1
             }
@@ -1130,6 +1149,24 @@
             dayStatuses[dateInput] = status;
             console.log('✅ Stav uložen v paměti:', dayStatuses);
 
+            // Ulož dayStatuses do localStorage
+            localStorage.setItem('dayStatuses', JSON.stringify(dayStatuses));
+
+            // Pokud je status "completed", přidej do completedDaysData a ulož do cloudu
+            if (status === 'completed') {
+                // Přidej jen pokud není už tam
+                if (!completedDaysData.includes(dateInput)) {
+                    completedDaysData.push(dateInput);
+                    console.log('✅ Den přidán do completedDaysData:', completedDaysData);
+
+                    // Ulož do localStorage a uploaduj na GitHub
+                    saveCompletedDaysToStorage(completedDaysData);
+                }
+            } else {
+                // Pokud je nesplnění, také uploaduj na GitHub
+                uploadDataToGitHub();
+            }
+
             // Uloži do IndexedDB
             if (db) {
                 try {
@@ -1158,6 +1195,7 @@
             document.getElementById('successDate').value = '';
             updateDayCountDisplay();
             renderCalendar();
+            renderCompletedDays();
         }
 
         function addSuccessDay() {
@@ -1227,52 +1265,98 @@
                 return;
             }
 
-            const startDate = new Date(startDateStr);
+            // Parsuj jako místní čas (ne UTC!)
+            const parts = startDateStr.split('-');
+            const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            startDate.setHours(0, 0, 0, 0);  // Nastav na midnight
             const today = new Date();
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
+            today.setHours(0, 0, 0, 0);
 
-            let html = '';
+            let html = '<div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">';
 
-            // Vytvoř kalendář pro aktuální měsíc
-            const firstDay = new Date(currentYear, currentMonth, 1);
-            const lastDay = new Date(currentYear, currentMonth + 1, 0);
-            const daysInMonth = lastDay.getDate();
-            const startingDayOfWeek = firstDay.getDay();
+            // Vytvoř kalendář pro aktuální měsíc + předchozí měsíc
+            const months = [
+                { month: displayMonth === 0 ? 11 : displayMonth - 1, year: displayMonth === 0 ? displayYear - 1 : displayYear, label: 'prev' },
+                { month: displayMonth, year: displayYear, label: 'current' }
+            ];
 
-            html += `<div class="calendar-month">
-                <h4>${getMonthName(currentMonth)} ${currentYear}</h4>
-                <div class="calendar-grid">`;
+            months.forEach(monthData => {
+                const { month: mth, year: yr, label } = monthData;
+                const firstDay = new Date(yr, mth, 1);
+                const lastDay = new Date(yr, mth + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startingDayOfWeek = (firstDay.getDay() + 6) % 7;
 
-            // Naglavní řádky dnů v týdnu
-            const dayHeaders = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
-            dayHeaders.forEach(day => {
-                html += `<div class="calendar-day-header">${day}</div>`;
+                html += `<div class="calendar-month">
+                    <h4>${getMonthName(mth)} ${yr}</h4>
+                    <div class="calendar-grid">`;
+
+                // Naglavní řádky dnů v týdnu (pondělí až neděle)
+                const dayHeaders = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
+                dayHeaders.forEach(day => {
+                    html += `<div class="calendar-day-header">${day}</div>`;
+                });
+
+                // Prázdná pole na začátku měsíce
+                for (let i = 0; i < startingDayOfWeek; i++) {
+                    html += `<div class="calendar-day empty"></div>`;
+                }
+
+                // Dny měsíce
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(yr, mth, day);
+                    // Vytvoř ISO string jako MÍSTNÍ čas, ne UTC! To zabraňuje timezone offsetu
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const dayStr = String(date.getDate()).padStart(2, '0');
+                    const dateStr = `${year}-${month}-${dayStr}`;
+
+                    // Kontrola jestli je den v rozsahu transformace
+                    if (date < startDate || date > today) {
+                        html += `<div class="calendar-day empty"></div>`;
+                    } else if (dayStatuses[dateStr]) {
+                        // Den má zaznamenán stav - zobraz completed nebo failed
+                        const status = dayStatuses[dateStr];
+                        const statusClass = status === 'completed' ? 'completed' : 'failed';
+                        html += `<div class="calendar-day ${statusClass}" onclick="toggleDayStatus('${dateStr}')">${day}</div>`;
+                    } else {
+                        // Den v rozsahu transformace, ale bez záznamu - šedý (empty)
+                        html += `<div class="calendar-day empty" onclick="toggleDayStatus('${dateStr}')" style="cursor: pointer; background: #f0f0f0; color: #999;">${day}</div>`;
+                    }
+                }
+
+                html += `</div></div>`;
             });
 
-            // Prázdná pole na začátku měsíce
-            for (let i = 0; i < startingDayOfWeek; i++) {
-                html += `<div class="calendar-day empty"></div>`;
-            }
+            // Tlačítka na navigaci
+            html += `<div style="display: flex; flex-direction: column; gap: 10px; align-self: flex-start; margin-top: 15px;">
+                <button onclick="prevMonth()" style="padding: 10px 15px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">⬅️ Předchozí měsíc</button>
+                <button onclick="nextMonth()" style="padding: 10px 15px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">Další měsíc ➡️</button>
+            </div>`;
 
-            // Dny měsíce
-            for (let day = 1; day <= daysInMonth; day++) {
-                const date = new Date(currentYear, currentMonth, day);
-                const dateStr = date.toISOString().split('T')[0];
-
-                // Kontrola jestli je den v rozsahu transformace
-                if (date < startDate || date > today) {
-                    html += `<div class="calendar-day empty"></div>`;
-                } else {
-                    const status = dayStatuses[dateStr] || 'completed';
-                    const statusClass = status === 'completed' ? 'completed' : 'failed';
-                    html += `<div class="calendar-day ${statusClass}" onclick="toggleDayStatus('${dateStr}')">${day}</div>`;
-                }
-            }
-
-            html += `</div></div>`;
+            html += '</div>';
 
             document.getElementById('calendarContainer').innerHTML = html;
+        }
+
+        function prevMonth() {
+            if (displayMonth === 0) {
+                displayMonth = 11;
+                displayYear--;
+            } else {
+                displayMonth--;
+            }
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            if (displayMonth === 11) {
+                displayMonth = 0;
+                displayYear++;
+            } else {
+                displayMonth++;
+            }
+            renderCalendar();
         }
 
         function toggleDayStatus(dateStr) {
@@ -1282,6 +1366,27 @@
             const newStatus = dayStatuses[dateStr] === 'completed' ? 'failed' : 'completed';
             dayStatuses[dateStr] = newStatus;
             console.log(`✅ Nový stav pro ${dateStr}: ${newStatus}`);
+
+            // Aktualizuj completedDaysData
+            if (newStatus === 'completed') {
+                // Přidej do completedDaysData pokud není
+                if (!completedDaysData.includes(dateStr)) {
+                    completedDaysData.push(dateStr);
+                    console.log('✅ Den přidán do completedDaysData');
+                    saveCompletedDaysToStorage(completedDaysData);
+                }
+            } else {
+                // Odstraň z completedDaysData pokud je
+                const index = completedDaysData.indexOf(dateStr);
+                if (index > -1) {
+                    completedDaysData.splice(index, 1);
+                    console.log('✅ Den odstraněn z completedDaysData');
+                    saveCompletedDaysToStorage(completedDaysData);
+                }
+            }
+
+            // Ulož dayStatuses do localStorage
+            localStorage.setItem('dayStatuses', JSON.stringify(dayStatuses));
 
             // Uloži do IndexedDB
             if (db) {
@@ -1303,8 +1408,16 @@
                 console.log('⚠️ db není inicializováno!');
             }
 
+            // Uploaduj na GitHub
+            uploadDataToGitHub().then(success => {
+                if (success) {
+                    console.log('☁️ Data synchronizována s GitHubem');
+                }
+            });
+
             renderCalendar();
             updateDayCountDisplay();
+            renderCompletedDays();
         }
 
         function getMonthName(month) {
@@ -1313,30 +1426,52 @@
         }
 
         function renderCompletedDays() {
+            // Načti completedDaysData z localStorage
             const completedDays = loadCompletedDaysFromStorage();
-            const list = document.getElementById('completedDaysList');
 
-            if (completedDays.length === 0) {
-                list.innerHTML = '<div style="opacity: 0.7;">Zatím žádné dny...</div>';
-                return;
-            }
-
-            // Seřaď od nejnovějšího
-            const sorted = [...completedDays].sort().reverse();
-            let html = '';
-
-            sorted.forEach(day => {
-                html += `<div style="padding: 8px; background: rgba(255,255,255,0.05); margin: 5px 0; border-radius: 5px; border-left: 3px solid #10b981; display: flex; justify-content: space-between; align-items: center;">
-                    <span>✅ ${formatDate(day)}</span>
-                    <button onclick="removeDay('${day}')" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;">✕ Smazat</button>
-                </div>`;
+            // Zjisti všechny nesplněné dny z dayStatuses
+            const failedDays = [];
+            Object.keys(dayStatuses).forEach(date => {
+                if (dayStatuses[date] === 'failed') {
+                    failedDays.push(date);
+                }
             });
 
-            list.innerHTML = html;
+            // Vykreslení splnění dní
+            const completedList = document.getElementById('completedDaysList');
+            if (completedDays.length === 0) {
+                completedList.innerHTML = '<div style="opacity: 0.7;">Zatím žádné dny...</div>';
+            } else {
+                const sorted = [...completedDays].sort().reverse();
+                let html = '';
+                sorted.forEach(day => {
+                    html += `<div style="padding: 8px; background: rgba(255,255,255,0.05); margin: 5px 0; border-radius: 5px; border-left: 3px solid #10b981; display: flex; justify-content: space-between; align-items: center;">
+                        <span>✅ ${formatDate(day)}</span>
+                        <button onclick="removeDay('${day}')" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;">✕ Smazat</button>
+                    </div>`;
+                });
+                completedList.innerHTML = html;
+            }
+
+            // Vykreslení nesplnění dní
+            const failedList = document.getElementById('failedDaysList');
+            if (failedDays.length === 0) {
+                failedList.innerHTML = '<div style="opacity: 0.7;">Zatím žádné dny...</div>';
+            } else {
+                const sorted = [...failedDays].sort().reverse();
+                let html = '';
+                sorted.forEach(day => {
+                    html += `<div style="padding: 8px; background: rgba(255,255,255,0.05); margin: 5px 0; border-radius: 5px; border-left: 3px solid #ef4444; display: flex; justify-content: space-between; align-items: center;">
+                        <span>❌ ${formatDate(day)}</span>
+                        <button onclick="removeFailedDay('${day}')" style="background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;">✕ Smazat</button>
+                    </div>`;
+                });
+                failedList.innerHTML = html;
+            }
         }
 
         function removeDay(dateStr) {
-            if (!confirm('Smazat ' + formatDate(dateStr) + '?')) {
+            if (!confirm('Smazat splnění den ' + formatDate(dateStr) + '?')) {
                 return;
             }
 
@@ -1344,12 +1479,48 @@
             completedDays = completedDays.filter(d => d !== dateStr);
             saveCompletedDaysToStorage(completedDays);
 
+            // Odstraň z dayStatuses
+            if (dayStatuses[dateStr]) {
+                delete dayStatuses[dateStr];
+            }
+
             // Aktualizuj display
-            document.getElementById('streakCount').textContent = completedDays.length;
-            document.getElementById('dayCount').textContent = completedDays.length;
+            updateDayCountDisplay();
+            renderCalendar();
             renderCompletedDays();
 
             displayMessage('✅ Den smazán!', 'success');
+        }
+
+        function removeFailedDay(dateStr) {
+            if (!confirm('Smazat nesplnění den ' + formatDate(dateStr) + '?')) {
+                return;
+            }
+
+            // Odstraň z dayStatuses
+            if (dayStatuses[dateStr]) {
+                delete dayStatuses[dateStr];
+            }
+
+            // Uloži do IndexedDB
+            if (db) {
+                try {
+                    const transaction = db.transaction(['dayStatuses'], 'readwrite');
+                    const store = transaction.objectStore('dayStatuses');
+                    const request = store.put({ id: 1, data: dayStatuses });
+                    request.onsuccess = () => {
+                        console.log('✅ Nesplnění den smazán z IndexedDB');
+                    };
+                } catch (e) {
+                    console.log('❌ Chyba pri mazání:', e);
+                }
+            }
+
+            // Aktualizuj display
+            renderCalendar();
+            renderCompletedDays();
+
+            displayMessage('✅ Nesplnění den smazán!', 'success');
         }
 
         function formatDate(dateStr) {
@@ -1384,6 +1555,207 @@
                 document.getElementById('streakCount').textContent = 0;
                 displayMessage('🔄 Streak resetován. Začínej znovu! 💪', 'success');
             }
+        }
+
+        // ===================================================================
+        // GITHUB SYNCHRONIZACE
+        // ===================================================================
+
+        async function uploadDataToGitHub() {
+            try {
+                const data = {
+                    completedDaysData: localStorage.getItem('completedDaysData'),
+                    transformationStartDate: localStorage.getItem('transformationStartDate'),
+                    dayStatuses: localStorage.getItem('dayStatuses'),
+                    studyWeek: localStorage.getItem('studyWeek'),
+                    completedWeeks: localStorage.getItem('completedWeeks'),
+                    syncedAt: new Date().toISOString()
+                };
+
+                const content = btoa(JSON.stringify(data, null, 2)); // Base64 encoding
+
+                // Najdi NEJNOVĚJŠÍ SHA - retry pokud je konflikt
+                let sha = null;
+                let retries = 3;
+
+                while (retries > 0) {
+                    try {
+                        const getRes = await fetch(
+                            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`,
+                            {
+                                headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` }
+                            }
+                        );
+
+                        if (getRes.ok) {
+                            const fileData = await getRes.json();
+                            sha = fileData.sha;
+
+                            // Upload/Update na GitHub
+                            const putRes = await fetch(
+                                `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`,
+                                {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        message: `📱 Automatická synchronizace - ${new Date().toLocaleString('cs-CZ')}`,
+                                        content: content,
+                                        sha: sha
+                                    })
+                                }
+                            );
+
+                            if (putRes.ok) {
+                                console.log('✅ Data uploadována na GitHub');
+                                return true;
+                            } else if (putRes.status === 409) {
+                                // Konflikt - zkus znova
+                                console.log('⚠️ Konflikt SHA - zkusím znova...');
+                                retries--;
+                                await new Promise(r => setTimeout(r, 500)); // Počkej 500ms
+                                continue;
+                            } else {
+                                console.log('⚠️ GitHub upload failed:', await putRes.json());
+                                return false;
+                            }
+                        }
+                    } catch (e) {
+                        retries--;
+                        await new Promise(r => setTimeout(r, 500));
+                    }
+                }
+
+                console.log('⚠️ GitHub upload failed po 3 pokusech');
+                return false;
+            } catch (e) {
+                console.log('⚠️ Chyba při uploadování na GitHub:', e.message);
+                return false;
+            }
+        }
+
+        async function downloadDataFromGitHub() {
+            try {
+                const res = await fetch(
+                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`,
+                    {
+                        headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` }
+                    }
+                );
+
+                if (!res.ok) {
+                    console.log('ℹ️ Žádná data na GitHubu - první spuštění');
+                    return false;
+                }
+
+                const fileData = await res.json();
+                const content = JSON.parse(atob(fileData.content));
+
+                // Importuj všechna data
+                if (content.completedDaysData) {
+                    localStorage.setItem('completedDaysData', content.completedDaysData);
+                    completedDaysData = JSON.parse(content.completedDaysData);
+                }
+                if (content.transformationStartDate) {
+                    localStorage.setItem('transformationStartDate', content.transformationStartDate);
+                }
+                if (content.dayStatuses) {
+                    localStorage.setItem('dayStatuses', content.dayStatuses);
+                    dayStatuses = JSON.parse(content.dayStatuses);
+                }
+                if (content.studyWeek) {
+                    localStorage.setItem('studyWeek', content.studyWeek);
+                    currentWeek = parseInt(content.studyWeek);
+                }
+                if (content.completedWeeks) {
+                    localStorage.setItem('completedWeeks', content.completedWeeks);
+                }
+
+                console.log('✅ Data stažena z GitHubu');
+                return true;
+            } catch (e) {
+                console.log('⚠️ Chyba při stahování z GitHubu:', e.message);
+                return false;
+            }
+        }
+
+        // ===================================================================
+        // EXPORT / IMPORT DAT
+        // ===================================================================
+
+        function exportData() {
+            const data = {
+                completedDaysData: localStorage.getItem('completedDaysData'),
+                transformationStartDate: localStorage.getItem('transformationStartDate'),
+                dayStatuses: localStorage.getItem('dayStatuses'),
+                studyWeek: localStorage.getItem('studyWeek'),
+                completedWeeks: localStorage.getItem('completedWeeks'),
+                exportedAt: new Date().toISOString()
+            };
+
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `pavel-health-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            displayMessage('✅ Data exportována! Soubor se stahuje...', 'success');
+            console.log('✅ Data exportována:', data);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    // Importuj všechna data
+                    if (data.completedDaysData) {
+                        localStorage.setItem('completedDaysData', data.completedDaysData);
+                        completedDaysData = JSON.parse(data.completedDaysData);
+                    }
+                    if (data.transformationStartDate) {
+                        localStorage.setItem('transformationStartDate', data.transformationStartDate);
+                    }
+                    if (data.dayStatuses) {
+                        localStorage.setItem('dayStatuses', data.dayStatuses);
+                        dayStatuses = JSON.parse(data.dayStatuses);
+                    }
+                    if (data.studyWeek) {
+                        localStorage.setItem('studyWeek', data.studyWeek);
+                        currentWeek = parseInt(data.studyWeek);
+                    }
+                    if (data.completedWeeks) {
+                        localStorage.setItem('completedWeeks', data.completedWeeks);
+                    }
+
+                    // Obnovit zobrazení
+                    updateDayCountDisplay();
+                    renderCalendar();
+                    renderCompletedDays();
+                    renderStudyWeek();
+
+                    displayMessage('✅ Data importována úspěšně! 🎉', 'success');
+                    console.log('✅ Data importována:', data);
+                } catch (error) {
+                    displayMessage('❌ Chyba při importu: ' + error.message, 'error');
+                    console.log('❌ Chyba:', error);
+                }
+            };
+            reader.readAsText(file);
+
+            // Reset input aby se dal znovu vybrat stejný soubor
+            event.target.value = '';
         }
 
         // ===================================================================
@@ -1492,15 +1864,26 @@
         window.addEventListener('DOMContentLoaded', async function() {
             console.log('🚀 DOMContentLoaded - Inicializuji aplikaci...');
 
+            // Stáhni data z GitHubu (synchronizace mezi zařízeními)
+            console.log('0️⃣ Synchronizuji data z GitHubu...');
+            const gitHubSynced = await downloadDataFromGitHub();
+            if (gitHubSynced) {
+                console.log('☁️ Data synchronizována z GitHubu');
+            }
+
             // Inicializuj IndexedDB
             console.log('1️⃣ Inicializuji IndexedDB...');
             await initIndexedDB();
             console.log('✅ IndexedDB inicializován');
 
-            // Načti dayStatuses z IndexedDB
+            // Načti dayStatuses z localStorage (které byly staženy z GitHubu)
             console.log('2️⃣ Načítám dayStatuses...');
-            await loadDayStatusesFromStorage();
-            console.log('✅ dayStatuses načteny');
+            const stored = localStorage.getItem('dayStatuses');
+            if (stored) {
+                dayStatuses = JSON.parse(stored);
+                console.log('✅ dayStatuses načteny z localStorage');
+            }
+            console.log('✅ dayStatuses připraveny');
 
             // Studium
             console.log('3️⃣ Inicializuji studijní plán...');
@@ -1512,8 +1895,15 @@
 
             // Evening Ritual - inicializuj display
             console.log('4️⃣ Inicializuji Evening Ritual...');
+
+            // Načti zaznamenané dny z localStorage
+            console.log('4a️⃣ Načítám zaznamenané dny z paměti...');
+            loadCompletedDaysFromStorage();
+            console.log('✅ Zaznamenané dny načteny');
+
             updateDayCountDisplay();
             renderCalendar();
+            renderCompletedDays();
             console.log('✅ Evening Ritual inicializován');
 
             // Nastav input na počáteční datum pokud existuje

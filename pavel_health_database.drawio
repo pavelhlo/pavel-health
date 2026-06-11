@@ -1,0 +1,203 @@
+<mxfile host="app.diagrams.net" modified="2026-06-07T08:00:00.000Z" agent="5.0" etag="abc123" version="24.0">
+  <diagram id="pavel-health-db" name="Pavel Health Database">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" background="ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- USERS Table -->
+        <mxCell id="users-table" value="USERS" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="50" y="50" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="users-pk" value="PK: id (UUID)" style="shape=partialRectangle;connectable=0;fillColor=#eeeeee;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="users-table">
+          <mxGeometry y="30" width="200" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="users-email" value="email (TEXT, UNIQUE)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="users-table">
+          <mxGeometry y="60" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="users-name" value="name (TEXT)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="users-table">
+          <mxGeometry y="85" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="users-start" value="start_date (DATE)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="users-table">
+          <mxGeometry y="110" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="users-created" value="created_at (TIMESTAMP)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="users-table">
+          <mxGeometry y="135" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="users-prefs" value="preferences (JSON)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="users-table">
+          <mxGeometry y="160" width="200" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- BLOOD_PRESSURE Table -->
+        <mxCell id="bp-table" value="BLOOD_PRESSURE" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="350" y="50" width="220" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="bp-pk" value="PK: id (UUID)" style="shape=partialRectangle;connectable=0;fillColor=#eeeeee;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="bp-table">
+          <mxGeometry y="30" width="220" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="bp-fk" value="FK: user_id → USERS" style="shape=partialRectangle;connectable=0;fillColor=#fff4e6;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="bp-table">
+          <mxGeometry y="60" width="220" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="bp-date" value="date (DATE)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="bp-table">
+          <mxGeometry y="85" width="220" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="bp-time" value="time (morning/evening)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="bp-table">
+          <mxGeometry y="105" width="220" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="bp-sys" value="systolic (INTEGER)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="bp-table">
+          <mxGeometry y="125" width="220" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="bp-dia" value="diastolic (INTEGER)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="bp-table">
+          <mxGeometry y="145" width="220" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="bp-hr" value="heart_rate (INTEGER)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="bp-table">
+          <mxGeometry y="165" width="220" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- BREATHING Table -->
+        <mxCell id="breath-table" value="BREATHING" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="650" y="50" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="breath-pk" value="PK: id (UUID)" style="shape=partialRectangle;connectable=0;fillColor=#eeeeee;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="breath-table">
+          <mxGeometry y="30" width="200" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="breath-fk" value="FK: user_id → USERS" style="shape=partialRectangle;connectable=0;fillColor=#fff4e6;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="breath-table">
+          <mxGeometry y="60" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="breath-date" value="date (DATE)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="breath-table">
+          <mxGeometry y="85" width="200" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="breath-time" value="time (morning/evening)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="breath-table">
+          <mxGeometry y="105" width="200" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="breath-dur" value="duration_minutes (INT)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="breath-table">
+          <mxGeometry y="125" width="200" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="breath-qual" value="quality (1-10)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="breath-table">
+          <mxGeometry y="145" width="200" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- EXERCISE Table -->
+        <mxCell id="ex-table" value="EXERCISE" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="920" y="50" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="ex-pk" value="PK: id (UUID)" style="shape=partialRectangle;connectable=0;fillColor=#eeeeee;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="ex-table">
+          <mxGeometry y="30" width="200" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="ex-fk" value="FK: user_id → USERS" style="shape=partialRectangle;connectable=0;fillColor=#fff4e6;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="ex-table">
+          <mxGeometry y="60" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="ex-date" value="date (DATE)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="ex-table">
+          <mxGeometry y="85" width="200" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="ex-time" value="time (morning/evening)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="ex-table">
+          <mxGeometry y="105" width="200" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="ex-type" value="type (pushups/squats)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="ex-table">
+          <mxGeometry y="125" width="200" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="ex-count" value="count (INTEGER)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="ex-table">
+          <mxGeometry y="145" width="200" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- HEALTH_NOTES Table -->
+        <mxCell id="hn-table" value="HEALTH_NOTES" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="50" y="320" width="220" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="hn-pk" value="PK: id (UUID)" style="shape=partialRectangle;connectable=0;fillColor=#eeeeee;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="hn-table">
+          <mxGeometry y="30" width="220" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="hn-fk" value="FK: user_id → USERS" style="shape=partialRectangle;connectable=0;fillColor:#fff4e6;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="hn-table">
+          <mxGeometry y="60" width="220" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="hn-date" value="date (DATE)" style="shape=partialRectangle;connectable=0;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="hn-table">
+          <mxGeometry y="85" width="220" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="hn-part" value="body_part (TEXT)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="hn-table">
+          <mxGeometry y="105" width="220" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="hn-sev" value="severity (low/med/high)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="hn-table">
+          <mxGeometry y="125" width="220" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="hn-note" value="note (TEXT)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="hn-table">
+          <mxGeometry y="145" width="220" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- FOOD Table -->
+        <mxCell id="food-table" value="FOOD" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="350" y="320" width="220" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="food-pk" value="PK: id (UUID)" style="shape=partialRectangle;connectable=0;fillColor=#eeeeee;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="food-table">
+          <mxGeometry y="30" width="220" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="food-fk" value="FK: user_id → USERS" style="shape=partialRectangle;connectable=0;fillColor:#fff4e6;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="food-table">
+          <mxGeometry y="60" width="220" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="food-date" value="date (DATE)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="food-table">
+          <mxGeometry y="85" width="220" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="food-time" value="time (TIME)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="food-table">
+          <mxGeometry y="105" width="220" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="food-type" value="meal_type (TEXT)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="food-table">
+          <mxGeometry y="125" width="220" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="food-desc" value="description (TEXT)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="food-table">
+          <mxGeometry y="145" width="220" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="food-qual" value="quality (healthy/normal)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="food-table">
+          <mxGeometry y="165" width="220" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- MOOD_HEALTH Table -->
+        <mxCell id="mood-table" value="MOOD_HEALTH" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="650" y="320" width="240" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="mood-pk" value="PK: id (UUID)" style="shape=partialRectangle;connectable=0;fillColor:#eeeeee;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="mood-table">
+          <mxGeometry y="30" width="240" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="mood-fk" value="FK: user_id → USERS" style="shape=partialRectangle;connectable=0;fillColor:#fff4e6;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="mood-table">
+          <mxGeometry y="60" width="240" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="mood-date" value="date (DATE)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="mood-table">
+          <mxGeometry y="85" width="240" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="mood-time" value="time (TIME)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="mood-table">
+          <mxGeometry y="105" width="240" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="mood-energy" value="energy_level (1-10)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="mood-table">
+          <mxGeometry y="125" width="240" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="mood-mood" value="mood (sad/neutral/happy)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="mood-table">
+          <mxGeometry y="145" width="240" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="mood-phys" value="physical_feeling (TEXT)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="mood-table">
+          <mxGeometry y="165" width="240" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="mood-rel" value="relationship_to_health (1-10)" style="shape=partialRectangle;connectable=0;fillColor:#ffffff;top=0;left=0;bottom=0;right=0;html=1;whiteSpace=wrap;overflow=hidden;" vertex="1" parent="mood-table">
+          <mxGeometry y="185" width="240" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Relationships -->
+        <mxCell id="rel1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;" edge="1" parent="1" source="users-table" target="bp-table">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;" edge="1" parent="1" source="users-table" target="breath-table">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;" edge="1" parent="1" source="users-table" target="ex-table">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;" edge="1" parent="1" source="users-table" target="hn-table">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;" edge="1" parent="1" source="users-table" target="food-table">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;" edge="1" parent="1" source="users-table" target="mood-table">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

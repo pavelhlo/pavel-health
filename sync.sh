@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# Spusť Python script
 python3 /Users/pavel.hlousek/Documents/Claude/sync_blood_pressure.py
 
-# Pushni VŠECHNY změny na GitHub
 cd /Users/pavel.hlousek/Documents/Claude
-git add -A
-git commit -m "Update: Blood pressure data sync - $(date '+%Y-%m-%d %H:%M')"
-git push
+git add pavel_evening_ritual_v2.html tlak_data.json
+git commit -m "UI Update: Add calendar view and day status tracking - $(date '+%Y-%m-%d %H:%M')"
+git push origin main
 
-echo "✅ Hotovo! Všechna data jsou na GitHubu"
+echo "✅ Hotovo!"
