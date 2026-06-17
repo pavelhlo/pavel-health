@@ -1668,12 +1668,15 @@
                         if (content.dayStatuses) {
                             dayStatuses = typeof content.dayStatuses === 'object' ? content.dayStatuses : {};
                             localStorage.setItem('dayStatuses', JSON.stringify(dayStatuses));
+                            console.log('✅ dayStatuses updated:', dayStatuses);
                         }
 
                         // Rerender UI
+                        console.log('🔄 Rerendering kalendář...');
                         updateDayCountDisplay();
                         renderCalendar();
                         renderCompletedDays();
+                        console.log('✅ UI aktualizován');
                     }
                 });
             } catch (e) {
