@@ -1671,6 +1671,15 @@
                             console.log('✅ dayStatuses updated:', dayStatuses);
                         }
 
+                        // Vyčisti dayStatuses - odstraň dny které nejsou v completedDaysData
+                        Object.keys(dayStatuses).forEach(dateStr => {
+                            if (dayStatuses[dateStr] === 'completed' && !completedDaysData.includes(dateStr)) {
+                                console.log('🧹 Čistím stav pro den:', dateStr);
+                                delete dayStatuses[dateStr];
+                            }
+                        });
+                        localStorage.setItem('dayStatuses', JSON.stringify(dayStatuses));
+
                         // Rerender UI
                         console.log('🔄 Rerendering kalendář...');
                         updateDayCountDisplay();
