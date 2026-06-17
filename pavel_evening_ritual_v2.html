@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🩺 Pavel - Zdraví & Evening Ritual Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
     <style>
         * {
             margin: 0;
@@ -978,13 +981,22 @@
         let displayMonth = new Date().getMonth();
         let displayYear = new Date().getFullYear();
 
-        // ===== GITHUB SYNCHRONIZACE =====
-        const GITHUB_CONFIG = {
-            owner: 'pavelhlo',
-            repo: 'pavel-health',
-            token: '', // Token removed - use environment variable or GitHub App
-            filePath: 'pavel_health_data.json'
+        // ===== FIREBASE KONFIGURACE =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyBfsaqL4LZEDKQxOA_IVw7fuS0xml-WWS8",
+            authDomain: "pavel-healthnew.firebaseapp.com",
+            databaseURL: "https://pavel-healthnew-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "pavel-healthnew",
+            storageBucket: "pavel-healthnew.firebasestorage.app",
+            messagingSenderId: "1026442057664",
+            appId: "1:1026442057664:web:c30bb345fcea783a2a5a25",
+            measurementId: "G-3ZR6ZL221P"
         };
+
+        // Inicializuj Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const userPath = 'users/pavel'; // Cesta v databázi pro tvá data
 
         // ===== STORAGE FUNKCE - localStorage pro persistenci =====
         function loadCompletedDaysFromStorage() {
@@ -1014,10 +1026,10 @@
             console.log('💾 completedDaysData uloženy do localStorage');
             updateDayCountDisplay();
 
-            // Automaticky uploaduj na GitHub
-            uploadDataToGitHub().then(success => {
+            // Automaticky uploaduj na Firebase
+            uploadDataToFirebase().then(success => {
                 if (success) {
-                    console.log('☁️ Data synchronizována s GitHubem');
+                    console.log('☁️ Data synchronizována s Firebase');
                 }
             });
         }
@@ -1163,8 +1175,8 @@
                     saveCompletedDaysToStorage(completedDaysData);
                 }
             } else {
-                // Pokud je nesplnění, také uploaduj na GitHub
-                uploadDataToGitHub();
+                // Pokud je nesplnění, také uploaduj na Firebase
+                uploadDataToFirebase();
             }
 
             // Uloži do IndexedDB
@@ -1408,10 +1420,10 @@
                 console.log('⚠️ db není inicializováno!');
             }
 
-            // Uploaduj na GitHub
-            uploadDataToGitHub().then(success => {
+            // Uploaduj na Firebase
+            uploadDataToFirebase().then(success => {
                 if (success) {
-                    console.log('☁️ Data synchronizována s GitHubem');
+                    console.log('☁️ Data synchronizována s Firebase');
                 }
             });
 
@@ -1558,126 +1570,97 @@
         }
 
         // ===================================================================
-        // GITHUB SYNCHRONIZACE
+        // FIREBASE SYNCHRONIZACE
         // ===================================================================
 
-        async function uploadDataToGitHub() {
+        async function uploadDataToFirebase() {
             try {
                 const data = {
-                    completedDaysData: localStorage.getItem('completedDaysData'),
+                    completedDaysData: completedDaysData,
                     transformationStartDate: localStorage.getItem('transformationStartDate'),
-                    dayStatuses: localStorage.getItem('dayStatuses'),
+                    dayStatuses: dayStatuses,
                     studyWeek: localStorage.getItem('studyWeek'),
                     completedWeeks: localStorage.getItem('completedWeeks'),
                     syncedAt: new Date().toISOString()
                 };
 
-                const content = btoa(JSON.stringify(data, null, 2)); // Base64 encoding
-
-                // Najdi NEJNOVĚJŠÍ SHA - retry pokud je konflikt
-                let sha = null;
-                let retries = 3;
-
-                while (retries > 0) {
-                    try {
-                        const getRes = await fetch(
-                            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`,
-                            {
-                                headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` }
-                            }
-                        );
-
-                        if (getRes.ok) {
-                            const fileData = await getRes.json();
-                            sha = fileData.sha;
-
-                            // Upload/Update na GitHub
-                            const putRes = await fetch(
-                                `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`,
-                                {
-                                    method: 'PUT',
-                                    headers: {
-                                        'Authorization': `token ${GITHUB_CONFIG.token}`,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        message: `📱 Automatická synchronizace - ${new Date().toLocaleString('cs-CZ')}`,
-                                        content: content,
-                                        sha: sha
-                                    })
-                                }
-                            );
-
-                            if (putRes.ok) {
-                                console.log('✅ Data uploadována na GitHub');
-                                return true;
-                            } else if (putRes.status === 409) {
-                                // Konflikt - zkus znova
-                                console.log('⚠️ Konflikt SHA - zkusím znova...');
-                                retries--;
-                                await new Promise(r => setTimeout(r, 500)); // Počkej 500ms
-                                continue;
-                            } else {
-                                console.log('⚠️ GitHub upload failed:', await putRes.json());
-                                return false;
-                            }
-                        }
-                    } catch (e) {
-                        retries--;
-                        await new Promise(r => setTimeout(r, 500));
-                    }
-                }
-
-                console.log('⚠️ GitHub upload failed po 3 pokusech');
-                return false;
+                // Ulož do Firebase Real Time Database
+                await database.ref(`${userPath}/data`).set(data);
+                console.log('✅ Data uploadována na Firebase');
+                return true;
             } catch (e) {
-                console.log('⚠️ Chyba při uploadování na GitHub:', e.message);
+                console.log('❌ Chyba při uploadování na Firebase:', e.message);
                 return false;
             }
         }
 
-        async function downloadDataFromGitHub() {
+        async function downloadDataFromFirebase() {
             try {
-                const res = await fetch(
-                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`,
-                    {
-                        headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` }
-                    }
-                );
+                const snapshot = await database.ref(`${userPath}/data`).once('value');
 
-                if (!res.ok) {
-                    console.log('ℹ️ Žádná data na GitHubu - první spuštění');
+                if (!snapshot.exists()) {
+                    console.log('ℹ️ Žádná data na Firebase - první spuštění');
                     return false;
                 }
 
-                const fileData = await res.json();
-                const content = JSON.parse(atob(fileData.content));
+                const content = snapshot.val();
 
                 // Importuj všechna data
                 if (content.completedDaysData) {
-                    localStorage.setItem('completedDaysData', content.completedDaysData);
-                    completedDaysData = JSON.parse(content.completedDaysData);
+                    localStorage.setItem('completedDaysData', JSON.stringify(content.completedDaysData));
+                    completedDaysData = Array.isArray(content.completedDaysData) ? content.completedDaysData : [];
                 }
                 if (content.transformationStartDate) {
                     localStorage.setItem('transformationStartDate', content.transformationStartDate);
                 }
                 if (content.dayStatuses) {
-                    localStorage.setItem('dayStatuses', content.dayStatuses);
-                    dayStatuses = JSON.parse(content.dayStatuses);
+                    localStorage.setItem('dayStatuses', JSON.stringify(content.dayStatuses));
+                    dayStatuses = typeof content.dayStatuses === 'object' ? content.dayStatuses : {};
                 }
                 if (content.studyWeek) {
                     localStorage.setItem('studyWeek', content.studyWeek);
                     currentWeek = parseInt(content.studyWeek);
                 }
                 if (content.completedWeeks) {
-                    localStorage.setItem('completedWeeks', content.completedWeeks);
+                    localStorage.setItem('completedWeeks', JSON.stringify(content.completedWeeks));
                 }
 
-                console.log('✅ Data stažena z GitHubu');
+                console.log('✅ Data stažena z Firebase');
                 return true;
             } catch (e) {
-                console.log('⚠️ Chyba při stahování z GitHubu:', e.message);
+                console.log('⚠️ Chyba při stahování z Firebase:', e.message);
                 return false;
+            }
+        }
+
+        // Naslouchej změnám v reálném čase
+        function setupFirebaseListener() {
+            try {
+                database.ref(`${userPath}/data`).on('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        const content = snapshot.val();
+                        console.log('🔄 Firebase data byla změněna z jiného zařízení');
+
+                        // Aktualizuj completedDaysData
+                        if (content.completedDaysData) {
+                            completedDaysData = Array.isArray(content.completedDaysData) ? content.completedDaysData : [];
+                            localStorage.setItem('completedDaysData', JSON.stringify(completedDaysData));
+                        }
+
+                        // Aktualizuj dayStatuses
+                        if (content.dayStatuses) {
+                            dayStatuses = typeof content.dayStatuses === 'object' ? content.dayStatuses : {};
+                            localStorage.setItem('dayStatuses', JSON.stringify(dayStatuses));
+                        }
+
+                        // Rerender UI
+                        updateDayCountDisplay();
+                        renderCalendar();
+                        renderCompletedDays();
+                    }
+                });
+            } catch (e) {
+                console.log('⚠️ Chyba při nastavování Firebase listener:', e.message);
             }
         }
 
@@ -1864,12 +1847,30 @@
         window.addEventListener('DOMContentLoaded', async function() {
             console.log('🚀 DOMContentLoaded - Inicializuji aplikaci...');
 
-            // Stáhni data z GitHubu (synchronizace mezi zařízeními)
-            console.log('0️⃣ Synchronizuji data z GitHubu...');
-            const gitHubSynced = await downloadDataFromGitHub();
-            if (gitHubSynced) {
-                console.log('☁️ Data synchronizována z GitHubu');
+            // Čekej na Firebase inicializaci
+            await new Promise(r => setTimeout(r, 1000));
+            console.log('⏳ Firebase čekal 1s na inicializaci...');
+
+            // Stáhni data z Firebase (synchronizace mezi zařízeními) - s retry
+            console.log('0️⃣ Synchronizuji data z Firebase...');
+            let firebaseSynced = false;
+            for (let i = 0; i < 3; i++) {
+                try {
+                    firebaseSynced = await downloadDataFromFirebase();
+                    if (firebaseSynced) {
+                        console.log('☁️ Data synchronizována z Firebase');
+                        break;
+                    }
+                } catch (e) {
+                    console.log(`⚠️ Pokus ${i+1} selhalo:`, e.message);
+                    await new Promise(r => setTimeout(r, 500));
+                }
             }
+
+            // Nastav listener na Firebase změny
+            console.log('0b️⃣ Nastavuji Firebase listener...');
+            setupFirebaseListener();
+            console.log('✅ Firebase listener připraven');
 
             // Inicializuj IndexedDB
             console.log('1️⃣ Inicializuji IndexedDB...');
