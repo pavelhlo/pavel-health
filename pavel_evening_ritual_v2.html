@@ -1592,6 +1592,9 @@
 
         async function uploadDataToFirebase() {
             try {
+                isUpdatingFromFirebase = true;
+                console.log('🔒 Vypínám listener - uploaduji...');
+
                 const data = {
                     completedDaysData: completedDaysData,
                     transformationStartDate: localStorage.getItem('transformationStartDate'),
@@ -1606,6 +1609,13 @@
                 // Ulož do Firebase Real Time Database
                 await database.ref(`${userPath}/data`).set(data);
                 console.log('✅ Data uploadována na Firebase');
+
+                // Počkej 500ms a pak znovu zapni listener
+                setTimeout(() => {
+                    isUpdatingFromFirebase = false;
+                    console.log('🔓 Zapínám listener - upload hotov');
+                }, 500);
+
                 return true;
             } catch (e) {
                 console.log('❌ Chyba při uploadování na Firebase:', e.message);
@@ -1652,10 +1662,17 @@
             }
         }
 
+        // Flag aby se zabránilo loopům
+        let isUpdatingFromFirebase = false;
+
         // Naslouchej změnám v reálném čase
         function setupFirebaseListener() {
             try {
                 database.ref(`${userPath}/data`).on('value', (snapshot) => {
+                    if (isUpdatingFromFirebase) {
+                        console.log('⏭️ Přeskakuji - právě uploaduji');
+                        return;
+                    }
                     if (snapshot.exists()) {
                         const content = snapshot.val();
                         console.log('🔄 Firebase data byla změněna z jiného zařízení');
