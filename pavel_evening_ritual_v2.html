@@ -1601,6 +1601,8 @@
                     syncedAt: new Date().toISOString()
                 };
 
+                console.log('📤 Uploaduji dayStatuses:', Object.keys(dayStatuses).length, 'dní');
+
                 // Ulož do Firebase Real Time Database
                 await database.ref(`${userPath}/data`).set(data);
                 console.log('✅ Data uploadována na Firebase');
